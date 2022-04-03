@@ -4,8 +4,35 @@
     <title>VA for Earthquake Analysis</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    Hello
+    <div id="container">
+        <p id="title">Visual Analytics for Earthquake Analysis</p>
+        <div id="content">
+            <div class="sub-section">
+                <div id="map">Map</div>
+                <div id="slider">Slider</div>
+                <div id="play-button">Play Button</div>
+                <div id="barchart">Bar Chart</div>
+            </div>
+            <div class="sub-section">
+                <div id="key-options">
+                    <select id="utilities">
+                        <option value="overall">Overall</option>
+                        <option value="sewer-and-water">Sewer and Water</option>
+                        <option value="power">Power</option>
+                        <option value="roads-and-bridges">Roads and Bridges</option>
+                        <option value="medical">Medical</option>
+                        <option value="buildings">Buildings</option>
+                        <option value="shake-intensity">Shake Intensity</option>
+                    </select>
+                    <input id="date" type="text" placeholder="yyyy-mm-dd hh.mm">
+                </div>
+                <div id="heatmap">Heat Map</div>
+                <div id="linechart">Line Chart</div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

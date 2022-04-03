@@ -1,0 +1,38 @@
+body {
+    border: 2px solid red;
+}
+
+#container {
+    display: flex;
+    flex-flow: column nowrap;
+    padding: 1em;
+    border: 2px solid blue;
+}
+
+#title {
+    font-size: larger;
+    border: 2px solid black;
+}
+
+#content {
+    display: flex;
+    flex-flow: row nowrap;
+    border: 2px solid black;
+}
+
+.sub-section {
+    flex: 1 1 auto;
+    display: flex;
+    flex-flow: column nowrap;
+    border: 2px solid green;
+}
+
+.sub-section > div {
+    border: 2px solid orange;
+}
+
+#key-options {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-evenly;
+}
