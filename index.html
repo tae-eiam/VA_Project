@@ -2,37 +2,69 @@
 <html>
 <head>
     <title>VA for Earthquake Analysis</title>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.rawgit.com/Eonasdan/bootstrap-datetimepicker/e8bddc60e73c1ec2475f827be36e1957af72e2ea/build/css/bootstrap-datetimepicker.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+
+    <script type="text/javascript" src="https://d3js.org/d3.v7.min.js"></script>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+	<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment-with-locales.js"></script>
+	<script type="text/javascript" src="https://cdn.rawgit.com/Eonasdan/bootstrap-datetimepicker/e8bddc60e73c1ec2475f827be36e1957af72e2ea/src/js/bootstrap-datetimepicker.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.13.0/d3-legend.js"></script>
 </head>
 <body>
     <div id="container">
-        <p id="title">Visual Analytics for Earthquake Analysis</p>
+        <h1 id="title">Visual Analytics for Earthquake Analysis</h1>
         <div id="content">
             <div class="sub-section">
-                <div id="map">Map</div>
+                <div id="map">
+                    <div id="missing-values"></div>
+                    <div id="missing-legend"></div>
+                    <div id="color-legend"></div>
+                </div>
                 <div id="slider">Slider</div>
                 <div id="play-button">Play Button</div>
                 <div id="barchart">Bar Chart</div>
             </div>
             <div class="sub-section">
-                <div id="key-options">
-                    <select id="utilities">
-                        <option value="overall">Overall</option>
-                        <option value="sewer-and-water">Sewer and Water</option>
-                        <option value="power">Power</option>
-                        <option value="roads-and-bridges">Roads and Bridges</option>
-                        <option value="medical">Medical</option>
-                        <option value="buildings">Buildings</option>
-                        <option value="shake-intensity">Shake Intensity</option>
-                    </select>
-                    <input id="date" type="text" placeholder="yyyy-mm-dd hh.mm">
+                <div id="key-options" class="row">
+                    <div class='col-md-3'>
+                        <select id="utilities" class="form-control">
+                            <option value="overall" selected>Overall</option>
+                            <option value="sewer_and_water">Sewer and Water</option>
+                            <option value="power">Power</option>
+                            <option value="roads_and_bridges">Roads and Bridges</option>
+                            <option value="medical">Medical</option>
+                            <option value="buildings">Buildings</option>
+                            <option value="shake_intensity">Shake Intensity</option>
+                        </select>
+                    </div>  
+                    <div class='col-md-3'>
+                        <input type='text' id="date" class="form-control" />
+                    </div>                   
                 </div>
                 <div id="heatmap">Heat Map</div>
                 <div id="linechart">Line Chart</div>
             </div>
         </div>
     </div>
+    <div id="loading-container">
+        <div id="blackscreen"></div>
+        <div id="loading-box">
+            <div id="loader"></div>
+            <h3>Loading...</h3>
+        </div>
+    </div>
 </body>
+
+<script type="text/javascript" src="scripts.js"></script>
 </html>
