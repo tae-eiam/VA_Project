@@ -1,7 +1,13 @@
 //----------------------- Variables -----------------------
 
-var date = "2020-04-06 00:00";
+var chosenDate = new Date("2020-04-06 00:00");
 var utilities = "overall";
+
+var runningInterval;
+var startDate = new Date("2020-04-06 00:00");
+var endDate = new Date("2020-04-07 00:05");
+
+var timeStampDateFormat = d3.timeFormat("%a %d %H:%M");
 
 //----------------------- Dataset -----------------------
 
@@ -66,7 +72,6 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
                 .attr("d", circleSymbol)
                 .attr("fill", "none")
                 .attr("transform", function(feature) {
-                    console.log(feature);
                     switch(feature.properties.Id) {
                         case 1: return "translate(150, 90)";
                         case 2: return "translate(210, 70)";
@@ -110,7 +115,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
                                     .scale(missingOrdinal);
           
         missingSvg.select(".legendOrdinal")
-                .call(missingLegendOrdinal);
+                    .call(missingLegendOrdinal);
 
         //----------------------- Map Color Legend -----------------------
 
@@ -137,7 +142,46 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
         colorSvg.select(".legendOrdinal")
                 .call(legendOrdinal);
 
-        //----------------------- Map Functions -----------------------
+        //----------------------- DateTimePicker -----------------------
+
+        $(function () {
+            $('#date').datetimepicker({
+                format : 'YYYY-MM-DD HH:mm',
+                defaultDate: "2020-04-06 00:00",
+                minDate: "2020-04-06 00:00",
+                maxDate: "2020-04-11 00:00",
+                useCurrent: false,
+                stepping: 5
+            });
+        });
+
+        $(document).on('dp.change', 'input#date', function() {
+            chosenDate = new Date(this.value);
+            startDate = new Date(chosenDate);
+            endDate = new Date(startDate);
+            endDate.setHours(endDate.getHours() + 24);
+            endDate.setMinutes(endDate.getMinutes() + 5);
+
+            if (endDate.getTime() >= new Date("2020-04-11 00:00").getTime()) {
+                endDate = new Date("2020-04-11 00:05");
+            }
+
+            runPlayer();
+        });
+
+        //----------------------- Utilities -----------------------
+
+        d3.select("#utilities")
+        .on("change", function() {
+            utilities = this.value;
+            runPlayer();
+        });
+
+        //----------------------- Time Bar -----------------------
+        
+        drawTimeBar();
+
+        //----------------------- Functions -----------------------
 
         function clearMap() {
             g.selectAll("path")
@@ -147,8 +191,13 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
                     .attr("fill", "none");
         } 
         
-        function redrawMap() {
+        function redrawMap(date = chosenDate) {
             clearMap()
+
+            d3.select("#time-map")
+                .html(timeStampDateFormat(date));
+
+            date = formatDate(date);
             var filteredData = filterData(date, utilities);
                     
             filteredData.forEach(function(d) {
@@ -172,34 +221,99 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
             });
         }
 
-        //----------------------- DateTimePicker -----------------------
+        function clearTimeBar() {
+            d3.select("#time-bar > svg").remove();
+        }
 
-        $(function () {
-            $('#date').datetimepicker({
-                format : 'YYYY-MM-DD HH:mm',
-                defaultDate: "2020-04-06 00:00",
-                minDate: "2020-04-06 00:00",
-                maxDate: "2020-04-11 00:00",
-                useCurrent: false,
-                stepping: 5
-            });
-        });
+        function drawTimeBar(currentRunningDate = startDate) {
+            clearTimeBar();
 
-        $(document).on('dp.change', 'input#date', function() {
-            date = this.value;
-            redrawMap();
-        });
+            var timeSvg = d3.select("#time-bar")
+                        .append("svg")
+                        .attr("width", "100%")
+                        .attr("height", "50px");
 
-        //----------------------- Utilities -----------------------
+            var timeG = timeSvg.append("g")
+                                .attr("transform", "translate(20, 0)");
 
-        d3.select("#utilities")
-        .on("change", function() {
-            utilities = this.value;
-            redrawMap();
-        });
+            var timeWidth = Math.round(timeSvg.node().getBoundingClientRect().width);
+            var timeHeight = Math.round(timeSvg.node().getBoundingClientRect().height);
 
-        //----------------------- Miscellaneous -----------------------
+            var timeScale = d3.scaleTime()
+                          .domain([startDate, endDate])
+                          .range([0, timeWidth - 40]);
 
+            var fiveMinutesData = d3.timeMinute.range(startDate, endDate, 5);
+                            
+            timeG.append("g")
+                    .attr("transform", "translate(0, 30)")
+                    .attr("class", "axisX")
+                    .call(d3.axisBottom(timeScale).ticks(d3.timeHour.every(3)).tickSizeOuter(0));
+                    
+            timeG.selectAll(".timeBar")
+                    .data(fiveMinutesData)
+                    .enter()
+                    .append("rect")
+                    .attr("class", "timeBar")
+                    .attr("x", (d) => {return timeScale(d);})
+                    .attr("y", 0)
+                    .attr("width", (timeWidth - 40) / fiveMinutesData.length)
+                    .attr("height", timeHeight - 21)
+                    .attr("fill", "#f5f5f5")
+                    .on("mouseover", mouseOverTimeBar)
+                    .on("mouseleave", mouseLeaveTimeBar)
+                    .on("click", clickTimeBar);
+   
+            timeG.select("rect[x='" + timeScale(currentRunningDate) + "']")
+                 .attr("fill", "steelblue");
+        }
+
+        function mouseOverTimeBar(event, data) {
+            var rect = this.getBoundingClientRect();
+
+            var timeStamp = d3.select("#timestamp")
+                                .style("display", "block")
+                                .html(timeStampDateFormat(data));
+
+            var tsWidth = timeStamp.node().offsetWidth;
+                    
+            timeStamp.style("top", (rect.top - 15) + "px")
+                     .style("left", (rect.left - (tsWidth / 2)) + "px")
+        }
+
+        function mouseLeaveTimeBar() {
+            d3.select("#timestamp")
+              .style("display", "none");
+        }
+
+        function clickTimeBar(event, data) {
+            runPlayer(data);
+        }
+
+        function startPlayer(skipTime = null) {
+            var currentRunningDate = !skipTime ? new Date(startDate): new Date(skipTime);
+
+            runningInterval = setInterval(function() {
+                drawTimeBar(currentRunningDate);
+                redrawMap(currentRunningDate);
+
+                currentRunningDate.setMinutes(currentRunningDate.getMinutes() + 5)
+                if (currentRunningDate.getTime() >= endDate.getTime()) {
+                    currentRunningDate = new Date(startDate);
+                }
+
+            }, 500);
+        }
+
+        function pausePlayer() {
+            clearInterval(runningInterval);
+        }
+
+        function runPlayer(skipTime = null) {
+            pausePlayer();
+            startPlayer(skipTime);
+        }
+        
         function filterData(date, utilities) {
             var filteredData = data.filter(function(d) {return (d.time == date)})
                                     .map(function(d) {
@@ -236,7 +350,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
 
         //----------------------- Finished loading data -----------------------
 
-        redrawMap();
+        runPlayer();
         document.getElementById("loading-container").style.display = "none";
     });
 });

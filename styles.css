@@ -3,40 +3,49 @@ html, body {
 }
 
 body {
-    border: 2px solid red;
+    /*border: 2px solid red;*/
+    padding: 0 10px;
 }
 
 #container {
     display: flex;
     flex-flow: column nowrap;
     padding: 0 1em 1em 1em;
-    border: 2px solid blue;
+    /*border: 2px solid blue;*/
 }
 
 #title {
     font-weight: 100;
-    border: 2px solid black;
+    /*border: 2px solid black;*/
 }
 
 #content {
     display: flex;
     flex-flow: row nowrap;
-    border: 2px solid black;
+    /*border: 2px solid black;*/
 }
 
 .sub-section {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     display: flex;
     flex-flow: column nowrap;
-    border: 2px solid green;
+    /*border: 2px solid green;*/
 }
 
 .sub-section > div {
-    border: 2px solid orange;
+    /*border: 2px solid orange;*/
 }
 
 #map {
     position: relative;
+}
+
+#time-map {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 10px 30px;
+    font-weight: bold;
 }
 
 #missing-values {
@@ -45,7 +54,7 @@ body {
     right: 0;
     top: 0;
     left: 0;
-    border: 2px solid black;
+    /*border: 2px solid black;*/
 }
 
 #missing-legend{
@@ -110,22 +119,77 @@ body {
     margin: -50px 0 0 -50px;
     left: 50%;
     top: 50%;
-    border: 5px solid #f3f3f3;
+    border: 5px solid #f7f7f7;
     border-radius: 50%;
     border-top: 5px solid #3498db;
     width: 100px;
     height: 100px;
     -webkit-animation: spin 1s linear infinite; /* Safari */
     animation: spin 1s linear infinite;
-  }
+}
   
-  /* Safari */
-  @-webkit-keyframes spin {
+/* Safari */
+@-webkit-keyframes spin {
     0% { -webkit-transform: rotate(0deg); }
     100% { -webkit-transform: rotate(360deg); }
-  }
+}
   
-  @keyframes spin {
+@keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-  }
+}
+
+.axisX path {
+    stroke: gray;
+}
+
+.axisX line {
+    stroke: gray;
+}
+
+#time-bar {
+    padding-top: 10px;
+}
+
+#timestamp {
+    font-size: 0.8em;
+    font-weight: bold;
+    color: steelblue;
+    position: absolute;
+    display: none;
+}
+
+
+
+
+
+
+#heatmap {
+    padding: 20px;
+}
+
+#heatmap img {
+    width: 100%;
+    height: auto;
+}
+
+#linechart img {
+    width: 90%;
+    height: 250px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+#barchart img {
+    width: 90%;
+    height: 180px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+#play-button button {
+    display: block;
+    margin: 10px auto;
+}
