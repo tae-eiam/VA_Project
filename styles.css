@@ -159,6 +159,20 @@ body {
     display: none;
 }
 
+#play-button {
+    display: block;
+    margin: 10px auto;
+}
+
+#play-button * {
+    vertical-align: middle;
+    font-size: 1em;
+    font-weight: 400;
+}
+
+#pause {
+    display: none;
+}
 
 
 
@@ -189,7 +203,3 @@ body {
     display: block;
 }
 
-#play-button button {
-    display: block;
-    margin: 10px auto;
-}
