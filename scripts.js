@@ -4,10 +4,13 @@ var chosenDate = new Date("2020-04-06 00:00");
 var utilities = "overall";
 
 var runningInterval;
+var currentRunningDate;
 var startDate = new Date("2020-04-06 00:00");
 var endDate = new Date("2020-04-07 00:05");
 
 var timeStampDateFormat = d3.timeFormat("%a %d %H:%M");
+
+var playStatus = false;
 
 //----------------------- Dataset -----------------------
 
@@ -181,6 +184,11 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
         
         drawTimeBar();
 
+        //----------------------- Play Pause Button -----------------------
+
+        d3.select("#play-button")
+          .on("click", clickPlayBtn);
+
         //----------------------- Functions -----------------------
 
         function clearMap() {
@@ -225,7 +233,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
             d3.select("#time-bar > svg").remove();
         }
 
-        function drawTimeBar(currentRunningDate = startDate) {
+        function drawTimeBar(date = startDate) {
             clearTimeBar();
 
             var timeSvg = d3.select("#time-bar")
@@ -264,7 +272,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
                     .on("mouseleave", mouseLeaveTimeBar)
                     .on("click", clickTimeBar);
    
-            timeG.select("rect[x='" + timeScale(currentRunningDate) + "']")
+            timeG.select("rect[x='" + timeScale(date) + "']")
                  .attr("fill", "steelblue");
         }
 
@@ -278,7 +286,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
             var tsWidth = timeStamp.node().offsetWidth;
                     
             timeStamp.style("top", (rect.top - 15) + "px")
-                     .style("left", (rect.left - (tsWidth / 2)) + "px")
+                     .style("left", (rect.left + ((rect.right - rect.left) / 2) - (tsWidth / 2)) + "px")
         }
 
         function mouseLeaveTimeBar() {
@@ -290,8 +298,14 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
             runPlayer(data);
         }
 
-        function startPlayer(skipTime = null) {
-            var currentRunningDate = !skipTime ? new Date(startDate): new Date(skipTime);
+        function oneTimeDraw(skipTime = null) {
+            currentRunningDate = !skipTime ? new Date(startDate): new Date(skipTime);
+            drawTimeBar(currentRunningDate);
+            redrawMap(currentRunningDate);
+        }
+
+        function loopDraw(skipTime = null) {
+            currentRunningDate = !skipTime ? new Date(startDate): new Date(skipTime);
 
             runningInterval = setInterval(function() {
                 drawTimeBar(currentRunningDate);
@@ -305,13 +319,33 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
             }, 500);
         }
 
-        function pausePlayer() {
+        function clear() {
             clearInterval(runningInterval);
         }
 
         function runPlayer(skipTime = null) {
-            pausePlayer();
-            startPlayer(skipTime);
+            if (playStatus) {
+                clear();
+                loopDraw(skipTime);
+            } else {
+                oneTimeDraw(skipTime);
+            }
+        }
+
+        function clickPlayBtn() {
+            if (playStatus) {
+                playStatus = !playStatus;
+                d3.select("#play").style("display", "inline");
+                d3.select("#pause").style("display", "none");
+                d3.select("#play-text").html("Play");
+                clear();
+            } else {
+                playStatus = !playStatus;
+                d3.select("#play").style("display", "none");
+                d3.select("#pause").style("display", "inline");
+                d3.select("#play-text").html("Pause");
+                runPlayer(currentRunningDate);
+            }
         }
         
         function filterData(date, utilities) {
