@@ -139,11 +139,11 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-.axisX path {
+.axis path {
     stroke: gray;
 }
 
-.axisX line {
+.axis line {
     stroke: gray;
 }
 
@@ -178,14 +178,6 @@ body {
 
 
 
-#heatmap {
-    padding: 20px;
-}
-
-#heatmap img {
-    width: 100%;
-    height: auto;
-}
 
 #linechart img {
     width: 90%;
