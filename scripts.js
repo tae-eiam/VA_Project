@@ -191,55 +191,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
 
         //----------------------- Heatmap -----------------------
 
-        var marginHeatmap = {top: 20, right: 40, bottom: 20, left: 100};
-
-        var heatmapSvg = d3.select("#heatmap")
-                            .append("svg")
-                            .attr("width", "100%")
-                            .attr("height", "48vh");
-
-        var heatmapWidth = heatmapSvg.node().getBoundingClientRect().width - (marginHeatmap.left + marginHeatmap.right),
-            heatmapHeight = heatmapSvg.node().getBoundingClientRect().height - (marginHeatmap.top + marginHeatmap.bottom);
-
-        var heatmapG = heatmapSvg.append("g")
-                                 .attr("transform", "translate(+" + marginHeatmap.left + "," + marginHeatmap.top + ")");
-
-        var heatmapX = d3.scaleTime()
-                         .domain([startDate, endDate])
-                         .range([0, heatmapWidth]);
-
-        var heatmapY = d3.scaleBand()
-                         .domain(["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water", "Overall"])
-                         .range([heatmapHeight, 0])
-                         .padding(0.02);
-
-
-                    
-        var tempUtilities = ["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water", "Overall"];
-                        
-        var oneHourData = d3.timeHour.range(startDate, endDate, 1);
-        oneHourData = oneHourData.flatMap(d1 => tempUtilities.map(function(d2){ return {"date": d1, "utility": d2}; }));
-
-        heatmapG.append("g")
-                .attr("class", "axis")                                               
-                .attr("transform", "translate(0," + heatmapHeight + ")")
-                .call(d3.axisBottom(heatmapX).ticks(d3.timeHour.every(3)).tickSizeOuter(0))
-                .select(".domain").remove();
-
-        heatmapG.append("g")
-                .attr("class", "axis")
-                .call(d3.axisLeft(heatmapY).tickSize(0))
-                .select(".domain").remove();
-
-        heatmapG.selectAll()
-                .data(oneHourData)
-                .enter()
-                .append("rect")
-                .attr("x", function(d) {return heatmapX(d.date)})
-                .attr("y", function(d) {return heatmapY(d.utility)})
-                .attr("width", heatmapWidth / 25)
-                .attr("height", heatmapY.bandwidth())
-                .style("fill", "steelblue");
+        drawHeatmap();
 
         //----------------------- Functions -----------------------
 
@@ -398,6 +350,76 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
                 d3.select("#play-text").html("Pause");
                 runPlayer(currentRunningDate);
             }
+        }
+
+        function clearHeatmap() {
+            d3.select("#heatmap > svg").remove();
+        }
+
+        function drawHeatmap(date = null) {
+            clearHeatmap();
+
+            var marginHeatmap = {top: 20, right: 40, bottom: 20, left: 100};
+
+            var heatmapSvg = d3.select("#heatmap")
+                                .append("svg")
+                                .attr("width", "100%")
+                                .attr("height", "48vh")
+                                .on("click", clickOutsideHeatmap);
+
+            var heatmapWidth = heatmapSvg.node().getBoundingClientRect().width - (marginHeatmap.left + marginHeatmap.right),
+                heatmapHeight = heatmapSvg.node().getBoundingClientRect().height - (marginHeatmap.top + marginHeatmap.bottom);
+
+            var heatmapG = heatmapSvg.append("g")
+                                    .attr("transform", "translate(+" + marginHeatmap.left + "," + marginHeatmap.top + ")");
+
+            var heatmapX = d3.scaleTime()
+                            .domain([startDate, endDate])
+                            .range([0, heatmapWidth]);
+
+            var heatmapY = d3.scaleBand()
+                            .domain(["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water", "Overall"])
+                            .range([heatmapHeight, 0])
+                            .padding(0.02);
+
+
+                        
+            var tempUtilities = ["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water", "Overall"];
+                            
+            var oneHourData = d3.timeHour.range(startDate, endDate, 1);
+            oneHourData = oneHourData.flatMap(d1 => tempUtilities.map(function(d2){ return {"date": d1, "utility": d2}; }));
+
+            heatmapG.append("g")
+                    .attr("class", "axis")                                               
+                    .attr("transform", "translate(0," + heatmapHeight + ")")
+                    .call(d3.axisBottom(heatmapX).ticks(d3.timeHour.every(3)).tickSizeOuter(0))
+                    .select(".domain").remove();
+
+            heatmapG.append("g")
+                    .attr("class", "axis")
+                    .call(d3.axisLeft(heatmapY).tickSize(0))
+                    .select(".domain").remove();
+
+            heatmapG.selectAll()
+                    .data(oneHourData)
+                    .enter()
+                    .append("rect")
+                    .attr("x", function(d) {return heatmapX(d.date)})
+                    .attr("y", function(d) {return heatmapY(d.utility)})
+                    .attr("width", heatmapWidth / 25)
+                    .attr("height", heatmapY.bandwidth())
+                    .style("fill", "steelblue")
+                    .style("opacity", function(d) { return !date || date.getTime() == d.date.getTime() ? 1.0 : 0.5; })
+                    .on("click", clickHeatmap);
+        }
+
+        function clickOutsideHeatmap() {
+            drawHeatmap();
+        }
+
+        function clickHeatmap(event, data) {
+            event.stopPropagation();
+            drawHeatmap(data.date);
         }
         
         function filterData(date, utilities) {
