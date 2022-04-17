@@ -227,6 +227,58 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
 
         drawHeatmap();
 
+        //----------------------- Line Chart -----------------------
+
+        drawLineChart();
+
+        function clearLineChart() {
+            d3.select("#linechart > svg").remove();
+        }
+
+        function drawLineChart(date = startDate) {
+            clearLineChart();
+
+            var margin = {top: 25, right: 20, bottom: 20, left: 50};
+
+            var linechartSvg = d3.select("#linechart")
+                                 .append("svg")
+                                 .attr("width", "100%")
+                                 .attr("height", "33vh");
+
+            var linechartWidth = linechartSvg.node().getBoundingClientRect().width - margin.left - margin.right,
+                linechartHeight = linechartSvg.node().getBoundingClientRect().height - margin.top - margin.bottom;
+
+            var linechartG = linechartSvg.append("g")
+                                         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            //var groupData = d3.group()
+            //                  .key(["overall", "sewer_and_water", "power", "roads_and_bridges", "medical", "buildings", "shake_intensity"])
+            //                  .entries(data);
+
+            var lineEndDate = new Date(date);
+            lineEndDate.setMinutes(lineEndDate.getMinutes() + 60);
+            if (lineEndDate.getTime() >= endDate.getTime()) {
+                lineEndDate = new Date(endDate);
+            }
+            
+            var lineX = d3.scaleTime()
+                          .domain([date, lineEndDate])
+                          .range([0, linechartWidth]);
+
+            var lineY = d3.scaleLinear()
+                          .domain([0, 10])
+                          .range([linechartHeight, 0]);
+
+            linechartG.append("g")
+                      .attr("transform", "translate(0," + linechartHeight + ")")
+                      .call(d3.axisBottom(lineX).ticks(d3.timeMinute.every(5)))
+
+            linechartG.append("g")
+                      .call(d3.axisLeft(lineY));
+
+            
+        }
+
         //----------------------- Functions -----------------------
 
         function clickMap(event, data) {
@@ -408,7 +460,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                 heatmapHeight = heatmapSvg.node().getBoundingClientRect().height - (marginHeatmap.top + marginHeatmap.bottom);
 
             var heatmapG = heatmapSvg.append("g")
-                                    .attr("transform", "translate(+" + marginHeatmap.left + "," + marginHeatmap.top + ")");
+                                    .attr("transform", "translate(" + marginHeatmap.left + "," + marginHeatmap.top + ")");
 
             var heatmapX = d3.scaleTime()
                             .domain([startDate, endDate])
