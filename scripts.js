@@ -170,6 +170,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
             }
 
             runPlayer();
+            drawHeatmap();
         });
 
         //----------------------- Utilities -----------------------
@@ -386,7 +387,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
                         
             var tempUtilities = ["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water", "Overall"];
                             
-            var oneHourData = d3.timeHour.range(startDate, endDate, 1);
+            var oneHourData = d3.timeMinute.range(startDate, endDate, 60);
             oneHourData = oneHourData.flatMap(d1 => tempUtilities.map(function(d2){ return {"date": d1, "utility": d2}; }));
 
             heatmapG.append("g")
