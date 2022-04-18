@@ -54,8 +54,11 @@ d3.csv("mc1-data.csv").then(function(data) {
          .append("path")
          .attr("id", (d) => {return d.properties.Id})
          .attr("d", path)
+         .attr("class", "test")
          .style("stroke", "lightgrey")
-         .style("fill", "none");
+         .style("fill", "transparent")
+         .on("click", clickMap);
+
 
         //----------------------- Map Missing Values -----------------------
 
@@ -74,7 +77,7 @@ d3.csv("mc1-data.csv").then(function(data) {
                 .append("path")
                 .attr("id", (d) => {return "missing" + d.properties.Id})
                 .attr("d", circleSymbol)
-                .attr("fill", "none")
+                .attr("fill", "transparent")
                 .attr("transform", function(feature) {
                     switch(feature.properties.Id) {
                         case 1: return "translate(150, 90)";
@@ -197,12 +200,17 @@ d3.csv("mc1-data.csv").then(function(data) {
 
         //----------------------- Functions -----------------------
 
+        function clickMap(event, data) {
+            var location = data.properties.Id;
+            console.log(location);
+        }
+
         function clearMap() {
             g.selectAll("path")
-             .style("fill", "none");
+             .style("fill", "transparent");
 
             missingG.selectAll("path")
-                    .attr("fill", "none");
+                    .attr("fill", "transparent");
         } 
         
         function redrawMap(date = chosenDate) {
