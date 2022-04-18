@@ -14,12 +14,13 @@ var playStatus = false;
 
 //----------------------- Dataset -----------------------
 
-d3.csv("mc1-reports-data.csv").then(function(data) {
-    var parseDate = d3.timeParse("%Y-%m-%d %H:%M:%S");
+d3.csv("mc1-data.csv").then(function(data) {
+    var parseDate = d3.timeParse("%m/%d/%Y %H:%M");
     var formatDate = d3.timeFormat("%Y-%m-%d %H:%M");
 
     data.forEach(function(d) {
         d.time = formatDate(parseDate(d.time));
+        d.overall = +d.overall;
         d.sewer_and_water = +d.sewer_and_water;
         d.power = +d.power;
         d.roads_and_bridges = +d.roads_and_bridges;
@@ -123,7 +124,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
         //----------------------- Map Color Legend -----------------------
 
         var colorOrdinal = d3.scaleOrdinal()
-                                .domain(["0-2", "3-4", "5-6", "7-8", "9-10"])
+                                .domain(["0.0-2.0", "2.1-4.0", "4.1-6.0", "6.1-8.0", "8.1-10.0"])
                                 .range(["rgb(198, 244, 11)", "rgb(249, 255, 7)", "rgb(255, 189, 5)", "rgb(255, 146, 5)", "rgb(255, 6, 4)"]);
 
         var colorSvg = d3.select("#color-legend")
@@ -138,7 +139,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
         var legendOrdinal = d3.legendColor()
                                 .shape("rect")
                                 .shapePadding(2)
-                                .shapeWidth(30)
+                                .shapeWidth(40)
                                 .orient("horizontal")
                                 .scale(colorOrdinal);
           
@@ -215,19 +216,9 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
                     
             filteredData.forEach(function(d) {
                 g.select("path[id='" + d[1] +"']")
-                    .style("fill", function() {
-                        switch(utilities) {
-                            case "sewer_and_water": return colors(d[0]);
-                            case "power": return colors(d[0]);
-                            case "roads_and_bridges": return colors(d[0]);
-                            case "medical": return colors(d[0]);
-                            case "buildings": return colors(d[0]);
-                            case "shake_intensity": return colors(d[0]);
-                            default: return colors(d[0]);
-                        }
-                    });
+                    .style("fill", function() { return colors(d[0]); });
 
-                if(!d[0]) {
+                if(!d[0] && d[0] !== 0) {
                     missingG.select("#missing" + d[1])
                             .attr("fill", "grey");
                 }
@@ -321,7 +312,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
                     currentRunningDate = new Date(startDate);
                 }
 
-            }, 500);
+            }, 1000);
         }
 
         function clear() {
@@ -440,7 +431,7 @@ d3.csv("mc1-reports-data.csv").then(function(data) {
         }
 
         function colors(value) {
-            if (!value) {
+            if (!value && value !== 0) {
                 return "white";
             } else if (value >= 0 && value <= 2) {
                 return "#c6f40b";
