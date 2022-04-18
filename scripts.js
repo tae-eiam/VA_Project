@@ -54,11 +54,15 @@ d3.csv("mc1-data.csv").then(function(data) {
          .append("path")
          .attr("id", (d) => {return d.properties.Id})
          .attr("d", path)
-         .attr("class", "test")
+         .attr("class", "map-area")
          .style("stroke", "lightgrey")
          .style("fill", "transparent")
          .on("click", clickMap);
 
+
+        d3.select(".map-area")
+          .style("stroke", "black")
+          .style("stroke-width", "2px");
 
         //----------------------- Map Missing Values -----------------------
 
@@ -202,7 +206,16 @@ d3.csv("mc1-data.csv").then(function(data) {
 
         function clickMap(event, data) {
             var location = data.properties.Id;
-            console.log(location);
+
+            d3.selectAll(".map-area")
+              .style("stroke", "lightgrey")
+              .style("stroke-width", "1px");
+
+            d3.select(this)
+              .style("stroke", "black")
+              .style("stroke-width", "2px");
+
+            drawHeatmap(location);
         }
 
         function clearMap() {
@@ -356,7 +369,7 @@ d3.csv("mc1-data.csv").then(function(data) {
             d3.select("#heatmap > svg").remove();
         }
 
-        function drawHeatmap(date = null) {
+        function drawHeatmap(location = 1, date = null) {
             clearHeatmap();
 
             var marginHeatmap = {top: 20, right: 40, bottom: 20, left: 100};
