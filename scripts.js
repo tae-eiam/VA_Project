@@ -12,13 +12,15 @@ var timeStampDateFormat = d3.timeFormat("%a %d %H:%M");
 
 var playStatus = false;
 
+var selectedLocation = 1;
+
 //----------------------- Dataset -----------------------
 
-d3.csv("mc1-data.csv").then(function(data) {
+Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function(allData) {
     var parseDate = d3.timeParse("%m/%d/%Y %H:%M");
     var formatDate = d3.timeFormat("%Y-%m-%d %H:%M");
 
-    data.forEach(function(d) {
+    allData[0].forEach(function(d) {
         d.time = formatDate(parseDate(d.time));
         d.overall = +d.overall;
         d.sewer_and_water = +d.sewer_and_water;
@@ -28,6 +30,29 @@ d3.csv("mc1-data.csv").then(function(data) {
         d.buildings = +d.buildings;
         d.shake_intensity = +d.shake_intensity;
         d.location = +d.location;
+    });
+
+    allData[1].forEach(function(d) {
+        d.time = parseDate(d.time);
+        d.location1 = d.location1.substring(1, d.location1.length - 1).split(",");
+        d.location2 = d.location2.substring(1, d.location2.length - 1).split(",");
+        d.location3 = d.location3.substring(1, d.location3.length - 1).split(",");
+        d.location4 = d.location4.substring(1, d.location4.length - 1).split(",");
+        d.location5 = d.location5.substring(1, d.location5.length - 1).split(",");
+        d.location6 = d.location6.substring(1, d.location6.length - 1).split(",");
+        d.location7 = d.location7.substring(1, d.location7.length - 1).split(",");
+        d.location8 = d.location8.substring(1, d.location8.length - 1).split(",");
+        d.location9 = d.location9.substring(1, d.location9.length - 1).split(",");
+        d.location10 = d.location10.substring(1, d.location10.length - 1).split(",");
+        d.location11 = d.location11.substring(1, d.location11.length - 1).split(",");
+        d.location12 = d.location12.substring(1, d.location12.length - 1).split(",");
+        d.location13 = d.location13.substring(1, d.location13.length - 1).split(",");
+        d.location14 = d.location14.substring(1, d.location14.length - 1).split(",");
+        d.location15 = d.location15.substring(1, d.location15.length - 1).split(",");
+        d.location16 = d.location16.substring(1, d.location16.length - 1).split(",");
+        d.location17 = d.location17.substring(1, d.location17.length - 1).split(",");
+        d.location18 = d.location18.substring(1, d.location18.length - 1).split(",");
+        d.location19 = d.location19.substring(1, d.location19.length - 1).split(",");
     });
 
     //----------------------- Map -----------------------
@@ -60,7 +85,7 @@ d3.csv("mc1-data.csv").then(function(data) {
          .on("click", clickMap);
 
 
-        d3.select(".map-area")
+        d3.select("path[id='" + selectedLocation + "']")
           .style("stroke", "black")
           .style("stroke-width", "2px");
 
@@ -205,8 +230,6 @@ d3.csv("mc1-data.csv").then(function(data) {
         //----------------------- Functions -----------------------
 
         function clickMap(event, data) {
-            var location = data.properties.Id;
-
             d3.selectAll(".map-area")
               .style("stroke", "lightgrey")
               .style("stroke-width", "1px");
@@ -215,7 +238,8 @@ d3.csv("mc1-data.csv").then(function(data) {
               .style("stroke", "black")
               .style("stroke-width", "2px");
 
-            drawHeatmap(location);
+            selectedLocation = data.properties.Id;
+            drawHeatmap();
         }
 
         function clearMap() {
@@ -369,7 +393,7 @@ d3.csv("mc1-data.csv").then(function(data) {
             d3.select("#heatmap > svg").remove();
         }
 
-        function drawHeatmap(location = 1, date = null) {
+        function drawHeatmap(date = null) {
             clearHeatmap();
 
             var marginHeatmap = {top: 20, right: 40, bottom: 20, left: 100};
@@ -390,40 +414,67 @@ d3.csv("mc1-data.csv").then(function(data) {
                             .domain([startDate, endDate])
                             .range([0, heatmapWidth]);
 
-            var heatmapY = d3.scaleBand()
-                            .domain(["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water", "Overall"])
-                            .range([heatmapHeight, 0])
-                            .padding(0.02);
-
-
-                        
-            var tempUtilities = ["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water", "Overall"];
-                            
-            var oneHourData = d3.timeMinute.range(startDate, endDate, 60);
-            oneHourData = oneHourData.flatMap(d1 => tempUtilities.map(function(d2){ return {"date": d1, "utility": d2}; }));
-
             heatmapG.append("g")
                     .attr("class", "axis")                                               
                     .attr("transform", "translate(0," + heatmapHeight + ")")
                     .call(d3.axisBottom(heatmapX).ticks(d3.timeHour.every(3)).tickSizeOuter(0))
                     .select(".domain").remove();
 
+            //var utilities = ["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water", "Overall"];
+            var utilities = ["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water"];
+            
+            var heatmapY = d3.scaleBand()
+                            .domain(utilities)
+                            .range([heatmapHeight, 0])
+                            .padding(0.01);
+
             heatmapG.append("g")
                     .attr("class", "axis")
                     .call(d3.axisLeft(heatmapY).tickSize(0))
                     .select(".domain").remove();
+            
+
+            var heatmapData = filterHeatmapData();
+            heatmapData = heatmapData.flatMap(d1 => utilities.map(function(d2, index){ return {"date": d1.time, "utility": d2, "score": d1.utilities[utilities.length - 1 - index]}; }));
 
             heatmapG.selectAll()
-                    .data(oneHourData)
+                    .data(heatmapData)
                     .enter()
                     .append("rect")
                     .attr("x", function(d) {return heatmapX(d.date)})
                     .attr("y", function(d) {return heatmapY(d.utility)})
                     .attr("width", heatmapWidth / 25)
                     .attr("height", heatmapY.bandwidth())
-                    .style("fill", "steelblue")
-                    .style("opacity", function(d) { return !date || date.getTime() == d.date.getTime() ? 1.0 : 0.5; })
+                    .style("fill", function(d) {return colors(d.score)})
+                    .style("opacity", function(d) { return !date || date.getTime() == d.date.getTime() ? 1.0 : 0.3; })
                     .on("click", clickHeatmap);
+        }
+
+        function filterHeatmapData() {
+            var onehour = d3.timeMinute.range(startDate, endDate, 60);
+            return allData[1].map(function(d) {
+                                switch(selectedLocation) {
+                                    case 1: return {"time": d.time, "utilities": d.location1};
+                                    case 2: return {"time": d.time, "utilities": d.location2};
+                                    case 3: return {"time": d.time, "utilities": d.location3};
+                                    case 4: return {"time": d.time, "utilities": d.location4};
+                                    case 5: return {"time": d.time, "utilities": d.location5};
+                                    case 6: return {"time": d.time, "utilities": d.location6};
+                                    case 7: return {"time": d.time, "utilities": d.location7};
+                                    case 8: return {"time": d.time, "utilities": d.location8};
+                                    case 9: return {"time": d.time, "utilities": d.location9};
+                                    case 10: return {"time": d.time, "utilities": d.location10};
+                                    case 11: return {"time": d.time, "utilities": d.location11};
+                                    case 12: return {"time": d.time, "utilities": d.location12};
+                                    case 13: return {"time": d.time, "utilities": d.location13};
+                                    case 14: return {"time": d.time, "utilities": d.location14};
+                                    case 15: return {"time": d.time, "utilities": d.location15};
+                                    case 16: return {"time": d.time, "utilities": d.location16};
+                                    case 17: return {"time": d.time, "utilities": d.location17};
+                                    case 18: return {"time": d.time, "utilities": d.location18};
+                                    case 19: return {"time": d.time, "utilities": d.location19};
+                                }        
+                            }).filter((d) => onehour.findIndex((t) => t.getTime() == d.time.getTime()) >= 0);
         }
 
         function clickOutsideHeatmap() {
@@ -436,7 +487,7 @@ d3.csv("mc1-data.csv").then(function(data) {
         }
         
         function filterData(date, utilities) {
-            var filteredData = data.filter(function(d) {return (d.time == date)})
+            var filteredData = allData[0].filter(function(d) {return (d.time == date)})
                                     .map(function(d) {
                                         switch(utilities) {
                                             case "sewer_and_water": return [d.sewer_and_water, d.location];
