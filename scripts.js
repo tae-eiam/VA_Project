@@ -445,7 +445,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                     .attr("y", function(d) {return heatmapY(d.utility)})
                     .attr("width", heatmapWidth / 25)
                     .attr("height", heatmapY.bandwidth())
-                    .style("fill", function(d) {return colors(d.score)})
+                    .style("fill", function(d) {return colors(d.score, true)})
                     .style("opacity", function(d) { return !date || date.getTime() == d.date.getTime() ? 1.0 : 0.3; })
                     .on("click", clickHeatmap);
         }
@@ -502,9 +502,9 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
             return filteredData;
         }
 
-        function colors(value) {
+        function colors(value, removeColor = false) {
             if (!value && value !== 0) {
-                return "white";
+                return removeColor ? "none": "transparent";
             } else if (value >= 0 && value <= 2) {
                 return "#c6f40b";
             } else if (value > 2 && value <= 4) {
