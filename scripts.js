@@ -157,7 +157,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
 
         var colorOrdinal = d3.scaleOrdinal()
                                 .domain(["0.0-2.0", "2.1-4.0", "4.1-6.0", "6.1-8.0", "8.1-10.0"])
-                                .range(["rgb(198, 244, 11)", "rgb(249, 255, 7)", "rgb(255, 189, 5)", "rgb(255, 146, 5)", "rgb(255, 6, 4)"]);
+                                .range(["#bee7a5", "#ffe87c", "#f6bc66", "#f68c70", "#f55c7a"]);
 
         var colorSvg = d3.select("#color-legend")
                             .append("svg")
@@ -506,15 +506,15 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
             if (!value && value !== 0) {
                 return removeColor ? "none": "transparent";
             } else if (value >= 0 && value <= 2) {
-                return "#c6f40b";
+                return "#bee7a5";
             } else if (value > 2 && value <= 4) {
-                return "#f9ff07";
+                return "#ffe87c";
             } else if (value > 4 && value <= 6) {
-                return "#ffbd05";
+                return "#f6bc66";
             } else if (value > 6 && value <= 8) {
-                return "#ff9205";
+                return "#f68c70";
             } else if (value > 8 && value <= 10) {
-                return "#ff0604";
+                return "#f55c7a";
             } else {
                 return "black"; // Display this color means there is an error.
             }
