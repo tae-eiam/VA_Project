@@ -447,7 +447,10 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                     .attr("height", heatmapY.bandwidth())
                     .style("fill", function(d) {return colors(d.score, true)})
                     .style("opacity", function(d) { return !date || date.getTime() == d.date.getTime() ? 1.0 : 0.3; })
-                    .on("click", clickHeatmap);
+                    .on("click", clickHeatmap)
+                    .on("mouseover", mouseOverHeatmap)
+                    .on("mouseleave", mouseLeaveHeatmap)
+                    .on("mousemove", mouseMoveHeatmap);
         }
 
         function filterHeatmapData() {
@@ -484,6 +487,31 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
         function clickHeatmap(event, data) {
             event.stopPropagation();
             drawHeatmap(data.date);
+        }
+
+        function mouseOverHeatmap(event, data) {
+            var formatDateHeatmap = d3.timeFormat("%H:%M");
+            var startTime = formatDateHeatmap(data.date);
+            var endTime = new Date(data.date);
+            endTime.setMinutes(endTime.getMinutes() + 60);
+            endTime = formatDateHeatmap(endTime);
+
+            d3.select("#tooltip-heatmap")
+              .html(startTime + " - " + endTime)
+              .style("display", "block");
+        }
+
+        function mouseLeaveHeatmap() {
+            d3.select("#tooltip-heatmap")
+              .style("display", "none");
+        }
+
+        function mouseMoveHeatmap(event) {
+            var tooltip = d3.select("#tooltip-heatmap");
+            var ttWidth = tooltip.node().offsetWidth;
+
+            tooltip.style("top", (event.clientY - 30) + "px")
+                   .style("left", (event.clientX - (ttWidth / 2)) + "px")
         }
         
         function filterData(date, utilities) {
