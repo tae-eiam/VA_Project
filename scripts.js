@@ -536,7 +536,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                     .call(d3.axisLeft(heatmapY).tickSize(0))
                     .select(".domain").remove();
             
-
+            var onehour = d3.timeMinute.range(startDate, endDate, 60);
             var heatmapData = filterHeatmapData();
             heatmapData = heatmapData.flatMap(d1 => utilities.map(function(d2, index){ return {"date": d1.time, "utility": d2, "score": d1.utilities[utilities.length - 1 - index]}; }));
 
@@ -546,7 +546,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                     .append("rect")
                     .attr("x", function(d) {return heatmapX(d.date)})
                     .attr("y", function(d) {return heatmapY(d.utility)})
-                    .attr("width", heatmapWidth / 25)
+                    .attr("width", heatmapWidth / onehour.length)
                     .attr("height", heatmapY.bandwidth())
                     .style("fill", function(d) {return colors(d.score, true)})
                     .style("opacity", function(d) { return !date || date.getTime() == d.date.getTime() ? 1.0 : 0.3; })
