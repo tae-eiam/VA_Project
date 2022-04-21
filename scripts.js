@@ -238,7 +238,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
         function drawLineChart(date = startDate) {
             clearLineChart();
 
-            var margin = {top: 25, right: 20, bottom: 20, left: 50};
+            var margin = {top: 25, right: 100, bottom: 20, left: 100};
 
             var linechartSvg = d3.select("#linechart")
                                  .append("svg")
@@ -251,15 +251,15 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
             var linechartG = linechartSvg.append("g")
                                          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            //var groupData = d3.group()
-            //                  .key(["overall", "sewer_and_water", "power", "roads_and_bridges", "medical", "buildings", "shake_intensity"])
-            //                  .entries(data);
-
             var lineEndDate = new Date(date);
             lineEndDate.setMinutes(lineEndDate.getMinutes() + 60);
             if (lineEndDate.getTime() >= endDate.getTime()) {
                 lineEndDate = new Date(endDate);
             }
+
+            var lineData = getLineData(date, lineEndDate);
+            var groupData = Array.from(d3.group(lineData, d => d.utility), ([key, value]) => ({key, value}));
+            var color = d3.scaleOrdinal(d3.schemeCategory10);
             
             var lineX = d3.scaleTime()
                           .domain([date, lineEndDate])
@@ -269,14 +269,46 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                           .domain([0, 10])
                           .range([linechartHeight, 0]);
 
+            var lines = d3.line()
+                          .x(d => lineX(d.time))
+                          .y(d => lineY(d.score));
+
             linechartG.append("g")
                       .attr("transform", "translate(0," + linechartHeight + ")")
+                      .attr("class", "axis")
                       .call(d3.axisBottom(lineX).ticks(d3.timeMinute.every(5)))
 
             linechartG.append("g")
+                      .attr("class", "axis")
                       .call(d3.axisLeft(lineY));
 
-            
+            groupData.forEach(function(d) {
+                linechartG.append("path")
+                          .style("stroke", function() {return d.color = color(d.key)})
+                          .style("stroke-width", "3px")
+                          .style("fill", "none")
+                          .attr("d", lines(d.value));
+            });   
+        }
+
+        function getLineData(sdate, edate) {
+            var parseDate = d3.timeParse("%Y-%m-%d %H:%M");
+            var keys = ['overall', 'sewer_and_water', 'power', 'roads_and_bridges', 'medical', 'buildings', 'shake_intensity'];
+            var lineData = allData[0].filter(function(d) {
+                var date = parseDate(d.time);
+                return date.getTime() >= sdate.getTime() && date.getTime() <= edate.getTime() && d.location == selectedLocation;
+            }).flatMap(d1 => keys.map(function(key) {
+                switch(key) {
+                    case "overall": return {"utility": key, "time": parseDate(d1.time), "score": d1.overall};
+                    case "sewer_and_water": return {"utility": key, "time": parseDate(d1.time), "score": d1.sewer_and_water};
+                    case "power": return {"utility": key, "time": parseDate(d1.time), "score": d1.power};
+                    case "roads_and_bridges": return {"utility": key, "time": parseDate(d1.time), "score": d1.roads_and_bridges};
+                    case "medical": return {"utility": key, "time": parseDate(d1.time), "score": d1.medical};
+                    case "buildings": return {"utility": key, "time": parseDate(d1.time), "score": d1.buildings};
+                    case "shake_intensity": return {"utility": key, "time": parseDate(d1.time), "score": d1.shake_intensity};
+                }
+            }));
+            return lineData;
         }
 
         //----------------------- Functions -----------------------
