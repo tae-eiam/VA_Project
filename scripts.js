@@ -230,6 +230,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
         //----------------------- Line Chart -----------------------
 
         drawLineChart();
+        drawLineChartLegend();
 
         function clearLineChart() {
             d3.select("#linechart > svg").remove();
@@ -238,7 +239,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
         function drawLineChart(date = startDate) {
             clearLineChart();
 
-            var margin = {top: 25, right: 100, bottom: 20, left: 100};
+            var margin = {top: 25, right: 150, bottom: 20, left: 100};
 
             var linechartSvg = d3.select("#linechart")
                                  .append("svg")
@@ -309,6 +310,27 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                 }
             }));
             return lineData;
+        }
+
+        function drawLineChartLegend() {
+            var colorOrdinal = d3.scaleOrdinal(d3.schemeCategory10)
+                                 .domain(["Overall", "Sewer and Water", "Power", "Roads and Bridges", "Medical", "Buildings", "Shake Intensity"]);
+
+            var colorSvg = d3.select("#linechart-legend")
+                                .append("svg")
+                                .attr("width", "100%")
+                                .attr("height", "100%");
+
+            colorSvg.append("g")
+                    .attr("class", "legendOrdinal")
+                    .attr("transform", "translate(0,0)");
+    
+            var legendOrdinal = d3.legendColor()
+                                    .shapePadding(2)
+                                    .scale(colorOrdinal);
+            
+            colorSvg.select(".legendOrdinal")
+                    .call(legendOrdinal);
         }
 
         //----------------------- Functions -----------------------
