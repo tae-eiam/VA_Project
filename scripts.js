@@ -254,9 +254,6 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
 
             var lineEndDate = new Date(date);
             lineEndDate.setMinutes(lineEndDate.getMinutes() + 60);
-            if (lineEndDate.getTime() >= endDate.getTime()) {
-                lineEndDate = new Date(endDate);
-            }
 
             var lineData = getLineData(date, lineEndDate);
             var groupData = Array.from(d3.group(lineData, d => d.utility), ([key, value]) => ({key, value}));
@@ -277,7 +274,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
             linechartG.append("g")
                       .attr("transform", "translate(0," + linechartHeight + ")")
                       .attr("class", "axis")
-                      .call(d3.axisBottom(lineX).ticks(d3.timeMinute.every(5)))
+                      .call(d3.axisBottom(lineX).ticks(d3.timeMinute.every(5)).tickFormat(d3.timeFormat("%H:%M")));
 
             linechartG.append("g")
                       .attr("class", "axis")
@@ -593,6 +590,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
         function clickHeatmap(event, data) {
             event.stopPropagation();
             drawHeatmap(data.date);
+            drawLineChart(data.date);
         }
 
         function mouseOverHeatmap(event, data) {
