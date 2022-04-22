@@ -13,6 +13,7 @@ var timeStampDateFormat = d3.timeFormat("%a %d %H:%M");
 var playStatus = false;
 
 var selectedLocation = 1;
+var selectedHeatmapTime = new Date("2020-04-06 00:00");
 
 //----------------------- Dataset -----------------------
 
@@ -236,7 +237,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
             d3.select("#linechart > svg").remove();
         }
 
-        function drawLineChart(date = startDate) {
+        function drawLineChart() {
             clearLineChart();
 
             var margin = {top: 25, right: 150, bottom: 20, left: 100};
@@ -252,15 +253,15 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
             var linechartG = linechartSvg.append("g")
                                          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            var lineEndDate = new Date(date);
+            var lineEndDate = new Date(selectedHeatmapTime);
             lineEndDate.setMinutes(lineEndDate.getMinutes() + 60);
 
-            var lineData = getLineData(date, lineEndDate);
+            var lineData = getLineData(selectedHeatmapTime, lineEndDate);
             var groupData = Array.from(d3.group(lineData, d => d.utility), ([key, value]) => ({key, value}));
             var color = d3.scaleOrdinal(d3.schemeCategory10);
             
             var lineX = d3.scaleTime()
-                          .domain([date, lineEndDate])
+                          .domain([selectedHeatmapTime, lineEndDate])
                           .range([0, linechartWidth]);
 
             var lineY = d3.scaleLinear()
@@ -626,8 +627,9 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
 
         function clickHeatmap(event, data) {
             event.stopPropagation();
-            drawHeatmap(data.date);
-            drawLineChart(data.date);
+            selectedHeatmapTime = data.date;
+            drawHeatmap(selectedHeatmapTime);
+            drawLineChart();
         }
 
         function mouseOverHeatmap(event, data) {
