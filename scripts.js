@@ -229,8 +229,8 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
 
         //----------------------- Line Chart -----------------------
 
-        drawLineChart();
         drawLineChartLegend();
+        drawLineChart();
 
         function clearLineChart() {
             d3.select("#linechart > svg").remove();
@@ -280,11 +280,15 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                       .attr("class", "axis")
                       .call(d3.axisLeft(lineY));
 
-            groupData.forEach(function(d) {
+
+            var selectedUtilities = d3.selectAll("#linechart-legend .cell").nodes().map(legend => legend.selected)
+
+            groupData.forEach(function(d, index) {
                 linechartG.append("path")
                           .style("stroke", function() {return d.color = color(d.key)})
                           .style("stroke-width", "3px")
                           .style("fill", "none")
+                          .style("opacity", selectedUtilities[index] ? "1": "0")
                           .attr("d", lines(d.value));
             });   
         }
@@ -292,20 +296,33 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
         function getLineData(sdate, edate) {
             var parseDate = d3.timeParse("%Y-%m-%d %H:%M");
             var keys = ['overall', 'sewer_and_water', 'power', 'roads_and_bridges', 'medical', 'buildings', 'shake_intensity'];
-            var lineData = allData[0].filter(function(d) {
-                var date = parseDate(d.time);
-                return date.getTime() >= sdate.getTime() && date.getTime() <= edate.getTime() && d.location == selectedLocation;
-            }).flatMap(d1 => keys.map(function(key) {
-                switch(key) {
-                    case "overall": return {"utility": key, "time": parseDate(d1.time), "score": d1.overall};
-                    case "sewer_and_water": return {"utility": key, "time": parseDate(d1.time), "score": d1.sewer_and_water};
-                    case "power": return {"utility": key, "time": parseDate(d1.time), "score": d1.power};
-                    case "roads_and_bridges": return {"utility": key, "time": parseDate(d1.time), "score": d1.roads_and_bridges};
-                    case "medical": return {"utility": key, "time": parseDate(d1.time), "score": d1.medical};
-                    case "buildings": return {"utility": key, "time": parseDate(d1.time), "score": d1.buildings};
-                    case "shake_intensity": return {"utility": key, "time": parseDate(d1.time), "score": d1.shake_intensity};
-                }
-            }));
+
+            edate = new Date(edate)
+            edate.setMinutes(edate.getMinutes() + 5);
+
+            var filteredData = allData[0].filter(function(d) {
+                                    var date = parseDate(d.time);
+                                    return date.getTime() >= sdate.getTime() && date.getTime() <= edate.getTime() && d.location == selectedLocation;
+                                });
+
+            var timeRange = d3.timeMinute.range(sdate, edate, 5);
+            var lineData = timeRange.flatMap(time => keys.map(key => { return {"utility": key, "time": time, "score": 0} }));
+            lineData.forEach(function(ld) {
+                filteredData.forEach(function(fd) {
+                    if(ld.time.getTime() == parseDate(fd.time).getTime()) {
+                        switch(ld.utility) {
+                            case "overall": ld.score = (Math.round(fd.overall * 10) / 10).toFixed(1); break;
+                            case "sewer_and_water": ld.score = (Math.round(fd.sewer_and_water * 10) / 10).toFixed(1); break;
+                            case "power": ld.score = (Math.round(fd.power * 10) / 10).toFixed(1); break;
+                            case "roads_and_bridges": ld.score = (Math.round(fd.roads_and_bridges * 10) / 10).toFixed(1); break;
+                            case "medical": ld.score = (Math.round(fd.medical * 10) / 10).toFixed(1); break;
+                            case "buildings": ld.score = (Math.round(fd.buildings * 10) / 10).toFixed(1); break;
+                            case "shake_intensity": ld.score = (Math.round(fd.shake_intensity * 10) / 10).toFixed(1); break;
+                        }
+                    }
+                })
+            })      
+            
             return lineData;
         }
 
@@ -328,6 +345,26 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
             
             colorSvg.select(".legendOrdinal")
                     .call(legendOrdinal);
+
+            d3.selectAll(".cell")
+              .property("selected", true)
+              .on("click", clickLineChartLegend);
+        }
+
+        function clickLineChartLegend() {
+            var isSelected = d3.select(this).property("selected");
+
+            if (isSelected) {
+                d3.select(this)
+                  .property("selected", false)
+                  .style("opacity", "0.5");
+            } else {
+                d3.select(this)
+                  .property("selected", true)
+                  .style("opacity", "1");
+            }
+
+            drawLineChart();
         }
 
         //----------------------- Functions -----------------------
