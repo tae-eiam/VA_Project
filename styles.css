@@ -200,6 +200,21 @@ body {
     height: 9em;
 }
 
+#tooltip-linechart {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 150px 0 100px;
+    text-align: center;
+    opacity: 0;
+    border: orange solid 1px;
+}
+
+#tooltip-linechart > span{
+    margin: 0 15px;
+}
+
 
 
 

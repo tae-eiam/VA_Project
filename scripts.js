@@ -291,7 +291,53 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                           .style("fill", "none")
                           .style("opacity", selectedUtilities[index] ? "1": "0")
                           .attr("d", lines(d.value));
-            });   
+            });
+
+            linechartG.append("path")
+                      .attr("id", "value-line")
+                      .style("stroke", "steelblue")
+                      .style("stroke-width", "1px")
+                      .style("opacity", "0");
+
+            var bisect = d3.bisector(function(d) { return d.time; }).left;
+
+            linechartG.append("rect")
+                      .style("fill", "none")
+                      .style("pointer-events", "all")
+                      .attr('width', linechartWidth)
+                      .attr('height', linechartHeight)
+                      .on('mouseover', function() {
+                        d3.select("#value-line")
+                            .style("opacity", "1");
+
+                        d3.select("#tooltip-linechart")
+                            .style("opacity", "1");
+                      })
+                      .on('mousemove', function(event) {
+                          var posX = d3.pointer(event)[0];
+                          var focusedDate = lineX.invert(posX);
+                          var idx = bisect(lineData, focusedDate);
+                          var focusedData = lineData.slice(idx, idx + 7).map(d => d.score);
+
+                          d3.select("#value-line")
+                            .attr("d", function() {
+                                var d = "M" + posX + "," + linechartHeight;
+                                d += " " + posX + "," + 0;
+                                return d;
+                            });
+
+                          var children = document.getElementById("tooltip-linechart").children;
+                          for (let i = 0; i < children.length; i++) {
+                            children[i].innerHTML = focusedData[i];
+                          }
+                      })
+                      .on('mouseleave', function() {
+                          d3.select("#value-line")
+                            .style("opacity", "0");
+
+                          d3.select("#tooltip-linechart")
+                            .style("opacity", "0");
+                      });
         }
 
         function getLineData(sdate, edate) {
@@ -307,7 +353,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                                 });
 
             var timeRange = d3.timeMinute.range(sdate, edate, 5);
-            var lineData = timeRange.flatMap(time => keys.map(key => { return {"utility": key, "time": time, "score": 0} }));
+            var lineData = timeRange.flatMap(time => keys.map(key => { return {"utility": key, "time": time, "score": (0).toFixed(1)} }));
             lineData.forEach(function(ld) {
                 filteredData.forEach(function(fd) {
                     if(ld.time.getTime() == parseDate(fd.time).getTime()) {
