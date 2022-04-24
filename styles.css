@@ -207,8 +207,9 @@ body {
     right: 0;
     margin: 0 150px 0 100px;
     text-align: center;
+    font-weight: bold;
+    font-size: 0.9em;
     opacity: 0;
-    border: orange solid 1px;
 }
 
 #tooltip-linechart > span{

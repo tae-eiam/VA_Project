@@ -329,6 +329,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                           var children = document.getElementById("tooltip-linechart").children;
                           for (let i = 0; i < children.length; i++) {
                             children[i].innerHTML = focusedData[i];
+                            children[i].style.color = d3.schemeCategory10[i];
                           }
                       })
                       .on('mouseleave', function() {
