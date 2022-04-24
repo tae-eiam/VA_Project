@@ -233,194 +233,6 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
         drawLineChartLegend();
         drawLineChart();
 
-        function clearLineChart() {
-            d3.select("#linechart > svg").remove();
-        }
-
-        function drawLineChart() {
-            clearLineChart();
-
-            var margin = {top: 25, right: 150, bottom: 20, left: 100};
-
-            var linechartSvg = d3.select("#linechart")
-                                 .append("svg")
-                                 .attr("width", "100%")
-                                 .attr("height", "33vh");
-
-            var linechartWidth = linechartSvg.node().getBoundingClientRect().width - margin.left - margin.right,
-                linechartHeight = linechartSvg.node().getBoundingClientRect().height - margin.top - margin.bottom;
-
-            var linechartG = linechartSvg.append("g")
-                                         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-            var lineEndDate = new Date(selectedHeatmapTime);
-            lineEndDate.setMinutes(lineEndDate.getMinutes() + 60);
-
-            var lineData = getLineData(selectedHeatmapTime, lineEndDate);
-            var groupData = Array.from(d3.group(lineData, d => d.utility), ([key, value]) => ({key, value}));
-            var color = d3.scaleOrdinal(d3.schemeCategory10);
-            
-            var lineX = d3.scaleTime()
-                          .domain([selectedHeatmapTime, lineEndDate])
-                          .range([0, linechartWidth]);
-
-            var lineY = d3.scaleLinear()
-                          .domain([0, 10])
-                          .range([linechartHeight, 0]);
-
-            var lines = d3.line()
-                          .x(d => lineX(d.time))
-                          .y(d => lineY(d.score));
-
-            linechartG.append("g")
-                      .attr("transform", "translate(0," + linechartHeight + ")")
-                      .attr("class", "axis")
-                      .call(d3.axisBottom(lineX).ticks(d3.timeMinute.every(5)).tickFormat(d3.timeFormat("%H:%M")));
-
-            linechartG.append("g")
-                      .attr("class", "axis")
-                      .call(d3.axisLeft(lineY));
-
-
-            var selectedUtilities = d3.selectAll("#linechart-legend .cell").nodes().map(legend => legend.selected)
-
-            groupData.forEach(function(d, index) {
-                linechartG.append("path")
-                          .style("stroke", function() {return d.color = color(d.key)})
-                          .style("stroke-width", "3px")
-                          .style("fill", "none")
-                          .style("opacity", selectedUtilities[index] ? "1": "0")
-                          .attr("d", lines(d.value));
-            });
-
-            linechartG.append("path")
-                      .attr("id", "value-line")
-                      .style("stroke", "black")
-                      .style("stroke-width", "2px")
-                      .style("opacity", "0");
-
-            var bisect = d3.bisector(function(d) { return d.time; }).left;
-
-            linechartG.append("rect")
-                      .style("fill", "none")
-                      .style("pointer-events", "all")
-                      .attr('width', linechartWidth)
-                      .attr('height', linechartHeight)
-                      .on('mouseover', function() {
-                        d3.select("#value-line")
-                            .style("opacity", "1");
-
-                        d3.select("#tooltip-linechart")
-                            .style("opacity", "1");
-                      })
-                      .on('mousemove', function(event) {
-                          var posX = d3.pointer(event)[0];
-
-                          var coeff = 1000 * 60 * 5;
-                          var focusedDate = lineX.invert(posX);
-                          focusedDate = new Date(Math.round(focusedDate.getTime() / coeff) * coeff);
-
-                          var idx = bisect(lineData, focusedDate);
-                          var focusedData = lineData.slice(idx, idx + 7).map(d => d.score);
-
-                          posX = lineX(lineData[idx].time);
-
-                          d3.select("#value-line")
-                            .attr("d", function() {
-                                var d = "M" + posX + "," + linechartHeight;
-                                d += " " + posX + "," + 0;
-                                return d;
-                            });
-
-                          var children = document.getElementById("tooltip-linechart").children;
-                          for (let i = 0; i < children.length; i++) {
-                            children[i].innerHTML = focusedData[i];
-                            children[i].style.color = d3.schemeCategory10[i];
-                          }
-                      })
-                      .on('mouseleave', function() {
-                          d3.select("#value-line")
-                            .style("opacity", "0");
-
-                          d3.select("#tooltip-linechart")
-                            .style("opacity", "0");
-                      });
-        }
-
-        function getLineData(sdate, edate) {
-            var parseDate = d3.timeParse("%Y-%m-%d %H:%M");
-            var keys = ['overall', 'sewer_and_water', 'power', 'roads_and_bridges', 'medical', 'buildings', 'shake_intensity'];
-
-            edate = new Date(edate)
-            edate.setMinutes(edate.getMinutes() + 5);
-
-            var filteredData = allData[0].filter(function(d) {
-                                    var date = parseDate(d.time);
-                                    return date.getTime() >= sdate.getTime() && date.getTime() <= edate.getTime() && d.location == selectedLocation;
-                                });
-
-            var timeRange = d3.timeMinute.range(sdate, edate, 5);
-            var lineData = timeRange.flatMap(time => keys.map(key => { return {"utility": key, "time": time, "score": (0).toFixed(1)} }));
-            lineData.forEach(function(ld) {
-                filteredData.forEach(function(fd) {
-                    if(ld.time.getTime() == parseDate(fd.time).getTime()) {
-                        switch(ld.utility) {
-                            case "overall": ld.score = (Math.round(fd.overall * 10) / 10).toFixed(1); break;
-                            case "sewer_and_water": ld.score = (Math.round(fd.sewer_and_water * 10) / 10).toFixed(1); break;
-                            case "power": ld.score = (Math.round(fd.power * 10) / 10).toFixed(1); break;
-                            case "roads_and_bridges": ld.score = (Math.round(fd.roads_and_bridges * 10) / 10).toFixed(1); break;
-                            case "medical": ld.score = (Math.round(fd.medical * 10) / 10).toFixed(1); break;
-                            case "buildings": ld.score = (Math.round(fd.buildings * 10) / 10).toFixed(1); break;
-                            case "shake_intensity": ld.score = (Math.round(fd.shake_intensity * 10) / 10).toFixed(1); break;
-                        }
-                    }
-                })
-            })      
-            
-            return lineData;
-        }
-
-        function drawLineChartLegend() {
-            var colorOrdinal = d3.scaleOrdinal(d3.schemeCategory10)
-                                 .domain(["Overall", "Sewer and Water", "Power", "Roads and Bridges", "Medical", "Buildings", "Shake Intensity"]);
-
-            var colorSvg = d3.select("#linechart-legend")
-                                .append("svg")
-                                .attr("width", "100%")
-                                .attr("height", "100%");
-
-            colorSvg.append("g")
-                    .attr("class", "legendOrdinal")
-                    .attr("transform", "translate(0,0)");
-    
-            var legendOrdinal = d3.legendColor()
-                                    .shapePadding(2)
-                                    .scale(colorOrdinal);
-            
-            colorSvg.select(".legendOrdinal")
-                    .call(legendOrdinal);
-
-            d3.selectAll(".cell")
-              .property("selected", true)
-              .on("click", clickLineChartLegend);
-        }
-
-        function clickLineChartLegend() {
-            var isSelected = d3.select(this).property("selected");
-
-            if (isSelected) {
-                d3.select(this)
-                  .property("selected", false)
-                  .style("opacity", "0.5");
-            } else {
-                d3.select(this)
-                  .property("selected", true)
-                  .style("opacity", "1");
-            }
-
-            drawLineChart();
-        }
-
         //----------------------- Functions -----------------------
 
         function clickMap(event, data) {
@@ -614,8 +426,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                     .call(d3.axisBottom(heatmapX).ticks(d3.timeHour.every(3)).tickSizeOuter(0))
                     .select(".domain").remove();
 
-            //var utilities = ["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water", "Overall"];
-            var utilities = ["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water"];
+            var utilities = ["Shake Intensity", "Buildings", "Medical", "Roads and Bridges", "Power", "Sewer and Water", "Overall"];
             
             var heatmapY = d3.scaleBand()
                             .domain(utilities)
@@ -708,6 +519,194 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
 
             tooltip.style("top", (event.clientY - 30) + "px")
                    .style("left", (event.clientX - (ttWidth / 2)) + "px")
+        }
+
+        function clearLineChart() {
+            d3.select("#linechart > svg").remove();
+        }
+
+        function drawLineChart() {
+            clearLineChart();
+
+            var margin = {top: 25, right: 150, bottom: 20, left: 100};
+
+            var linechartSvg = d3.select("#linechart")
+                                 .append("svg")
+                                 .attr("width", "100%")
+                                 .attr("height", "33vh");
+
+            var linechartWidth = linechartSvg.node().getBoundingClientRect().width - margin.left - margin.right,
+                linechartHeight = linechartSvg.node().getBoundingClientRect().height - margin.top - margin.bottom;
+
+            var linechartG = linechartSvg.append("g")
+                                         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            var lineEndDate = new Date(selectedHeatmapTime);
+            lineEndDate.setMinutes(lineEndDate.getMinutes() + 60);
+
+            var lineData = getLineData(selectedHeatmapTime, lineEndDate);
+            var groupData = Array.from(d3.group(lineData, d => d.utility), ([key, value]) => ({key, value}));
+            var color = d3.scaleOrdinal(d3.schemeCategory10);
+            
+            var lineX = d3.scaleTime()
+                          .domain([selectedHeatmapTime, lineEndDate])
+                          .range([0, linechartWidth]);
+
+            var lineY = d3.scaleLinear()
+                          .domain([0, 10])
+                          .range([linechartHeight, 0]);
+
+            var lines = d3.line()
+                          .x(d => lineX(d.time))
+                          .y(d => lineY(d.score));
+
+            linechartG.append("g")
+                      .attr("transform", "translate(0," + linechartHeight + ")")
+                      .attr("class", "axis")
+                      .call(d3.axisBottom(lineX).ticks(d3.timeMinute.every(5)).tickFormat(d3.timeFormat("%H:%M")));
+
+            linechartG.append("g")
+                      .attr("class", "axis")
+                      .call(d3.axisLeft(lineY));
+
+
+            var selectedUtilities = d3.selectAll("#linechart-legend .cell").nodes().map(legend => legend.selected)
+
+            groupData.forEach(function(d, index) {
+                linechartG.append("path")
+                          .style("stroke", function() {return d.color = color(d.key)})
+                          .style("stroke-width", "3px")
+                          .style("fill", "none")
+                          .style("opacity", selectedUtilities[index] ? "1": "0")
+                          .attr("d", lines(d.value));
+            });
+
+            linechartG.append("path")
+                      .attr("id", "value-line")
+                      .style("stroke", "black")
+                      .style("stroke-width", "2px")
+                      .style("opacity", "0");
+
+            var bisect = d3.bisector(function(d) { return d.time; }).left;
+
+            linechartG.append("rect")
+                      .style("fill", "none")
+                      .style("pointer-events", "all")
+                      .attr('width', linechartWidth)
+                      .attr('height', linechartHeight)
+                      .on('mouseover', function() {
+                        d3.select("#value-line")
+                            .style("opacity", "1");
+
+                        d3.select("#tooltip-linechart")
+                            .style("opacity", "1");
+                      })
+                      .on('mousemove', function(event) {
+                          var posX = d3.pointer(event)[0];
+
+                          var coeff = 1000 * 60 * 5;
+                          var focusedDate = lineX.invert(posX);
+                          focusedDate = new Date(Math.round(focusedDate.getTime() / coeff) * coeff);
+
+                          var idx = bisect(lineData, focusedDate);
+                          var focusedData = lineData.slice(idx, idx + 7).map(d => d.score);
+
+                          posX = lineX(lineData[idx].time);
+
+                          d3.select("#value-line")
+                            .attr("d", function() {
+                                var d = "M" + posX + "," + linechartHeight;
+                                d += " " + posX + "," + 0;
+                                return d;
+                            });
+
+                          var children = document.getElementById("tooltip-linechart").children;
+                          for (let i = 0; i < children.length; i++) {
+                            children[i].innerHTML = focusedData[i];
+                            children[i].style.color = d3.schemeCategory10[i];
+                          }
+                      })
+                      .on('mouseleave', function() {
+                          d3.select("#value-line")
+                            .style("opacity", "0");
+
+                          d3.select("#tooltip-linechart")
+                            .style("opacity", "0");
+                      });
+        }
+
+        function getLineData(sdate, edate) {
+            var parseDate = d3.timeParse("%Y-%m-%d %H:%M");
+            var keys = ['overall', 'sewer_and_water', 'power', 'roads_and_bridges', 'medical', 'buildings', 'shake_intensity'];
+
+            edate = new Date(edate)
+            edate.setMinutes(edate.getMinutes() + 5);
+
+            var filteredData = allData[0].filter(function(d) {
+                                    var date = parseDate(d.time);
+                                    return date.getTime() >= sdate.getTime() && date.getTime() <= edate.getTime() && d.location == selectedLocation;
+                                });
+
+            var timeRange = d3.timeMinute.range(sdate, edate, 5);
+            var lineData = timeRange.flatMap(time => keys.map(key => { return {"utility": key, "time": time, "score": (0).toFixed(1)} }));
+            lineData.forEach(function(ld) {
+                filteredData.forEach(function(fd) {
+                    if(ld.time.getTime() == parseDate(fd.time).getTime()) {
+                        switch(ld.utility) {
+                            case "overall": ld.score = (Math.round(fd.overall * 10) / 10).toFixed(1); break;
+                            case "sewer_and_water": ld.score = (Math.round(fd.sewer_and_water * 10) / 10).toFixed(1); break;
+                            case "power": ld.score = (Math.round(fd.power * 10) / 10).toFixed(1); break;
+                            case "roads_and_bridges": ld.score = (Math.round(fd.roads_and_bridges * 10) / 10).toFixed(1); break;
+                            case "medical": ld.score = (Math.round(fd.medical * 10) / 10).toFixed(1); break;
+                            case "buildings": ld.score = (Math.round(fd.buildings * 10) / 10).toFixed(1); break;
+                            case "shake_intensity": ld.score = (Math.round(fd.shake_intensity * 10) / 10).toFixed(1); break;
+                        }
+                    }
+                })
+            })      
+            
+            return lineData;
+        }
+
+        function drawLineChartLegend() {
+            var colorOrdinal = d3.scaleOrdinal(d3.schemeCategory10)
+                                 .domain(["Overall", "Sewer and Water", "Power", "Roads and Bridges", "Medical", "Buildings", "Shake Intensity"]);
+
+            var colorSvg = d3.select("#linechart-legend")
+                                .append("svg")
+                                .attr("width", "100%")
+                                .attr("height", "100%");
+
+            colorSvg.append("g")
+                    .attr("class", "legendOrdinal")
+                    .attr("transform", "translate(0,0)");
+    
+            var legendOrdinal = d3.legendColor()
+                                    .shapePadding(2)
+                                    .scale(colorOrdinal);
+            
+            colorSvg.select(".legendOrdinal")
+                    .call(legendOrdinal);
+
+            d3.selectAll(".cell")
+              .property("selected", true)
+              .on("click", clickLineChartLegend);
+        }
+
+        function clickLineChartLegend() {
+            var isSelected = d3.select(this).property("selected");
+
+            if (isSelected) {
+                d3.select(this)
+                  .property("selected", false)
+                  .style("opacity", "0.5");
+            } else {
+                d3.select(this)
+                  .property("selected", true)
+                  .style("opacity", "1");
+            }
+
+            drawLineChart();
         }
         
         function filterData(date, utilities) {
