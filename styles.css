@@ -188,15 +188,37 @@ body {
     font-weight: bold;
 }
 
-
-
-#linechart img {
-    width: 90%;
-    height: 250px;
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
+#linechart {
+    position: relative;
 }
+
+#linechart-legend {
+    position: absolute;
+    top: 20px;
+    right: 0;
+    width: 9em;
+    height: 9em;
+}
+
+#tooltip-linechart {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 150px 0 100px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9em;
+    opacity: 0;
+}
+
+#tooltip-linechart > span{
+    margin: 0 15px;
+}
+
+
+
+
 
 #barchart img {
     width: 90%;
