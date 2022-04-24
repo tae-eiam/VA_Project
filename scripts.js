@@ -295,8 +295,8 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
 
             linechartG.append("path")
                       .attr("id", "value-line")
-                      .style("stroke", "steelblue")
-                      .style("stroke-width", "1px")
+                      .style("stroke", "black")
+                      .style("stroke-width", "2px")
                       .style("opacity", "0");
 
             var bisect = d3.bisector(function(d) { return d.time; }).left;
@@ -315,9 +315,15 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
                       })
                       .on('mousemove', function(event) {
                           var posX = d3.pointer(event)[0];
+
+                          var coeff = 1000 * 60 * 5;
                           var focusedDate = lineX.invert(posX);
+                          focusedDate = new Date(Math.round(focusedDate.getTime() / coeff) * coeff);
+
                           var idx = bisect(lineData, focusedDate);
                           var focusedData = lineData.slice(idx, idx + 7).map(d => d.score);
+
+                          posX = lineX(lineData[idx].time);
 
                           d3.select("#value-line")
                             .attr("d", function() {
