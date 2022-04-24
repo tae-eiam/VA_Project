@@ -40,6 +40,20 @@ body {
     position: relative;
 }
 
+#tooltip-map {
+    display: none;
+    position: absolute;
+    padding: 2px 4px;
+    text-align: center;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: steelblue;
+    background-color: white;
+    border: steelblue solid 2px;
+    border-radius: 5px;
+    z-index: 1;
+}
+
 #time-map {
     position: absolute;
     top: 0;

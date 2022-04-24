@@ -83,7 +83,10 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
          .attr("class", "map-area")
          .style("stroke", "lightgrey")
          .style("fill", "transparent")
-         .on("click", clickMap);
+         .on("click", clickMap)
+         .on("mouseover", mouseOverMap)
+         .on("mouseleave", mouseLeaveMap)
+         .on("mousemove", mouseMoveMap);
 
 
         d3.select("path[id='" + selectedLocation + "']")
@@ -246,6 +249,25 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
 
             selectedLocation = data.properties.Id;
             drawHeatmap();
+        }
+
+        function mouseOverMap(event, data) {
+            d3.select("#tooltip-map")
+              .style("display", "block")
+              .html(data.properties.Nbrhood);
+        }
+
+        function mouseLeaveMap() {
+            d3.select("#tooltip-map")
+              .style("display", "none");
+        }
+
+        function mouseMoveMap(event) {
+            var bound = d3.select("#map").node().getBoundingClientRect();
+
+            d3.select("#tooltip-map")
+              .style("top", (event.clientY - bound.top) + "px")
+              .style("left", (event.clientX - bound.left + 20) + "px");
         }
 
         function clearMap() {
