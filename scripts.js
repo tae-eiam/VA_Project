@@ -17,7 +17,7 @@ var selectedHeatmapTime = new Date("2020-04-06 00:00");
 
 //----------------------- Dataset -----------------------
 
-Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function(allData) {
+Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-reliabilities.csv')]).then(function(allData) {
     var parseDate = d3.timeParse("%m/%d/%Y %H:%M");
     var formatDate = d3.timeFormat("%Y-%m-%d %H:%M");
 
@@ -31,6 +31,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
         d.buildings = +d.buildings;
         d.shake_intensity = +d.shake_intensity;
         d.location = +d.location;
+        d.one_reliability = +d.one_reliability;
     });
 
     allData[1].forEach(function(d) {
@@ -54,6 +55,11 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
         d.location17 = d.location17.substring(1, d.location17.length - 1).split(",");
         d.location18 = d.location18.substring(1, d.location18.length - 1).split(",");
         d.location19 = d.location19.substring(1, d.location19.length - 1).split(",");
+    });
+
+    allData[2].forEach(function(d) {
+        d.location = +d.location;
+        d.whole_reliability = +d.whole_reliability;
     });
 
     //----------------------- Map -----------------------
@@ -235,6 +241,43 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv')]).then(function
 
         drawLineChartLegend();
         drawLineChart();
+
+        //----------------------- Bar Chart -----------------------
+
+        drawBarChart();
+
+
+        function drawBarChart() {
+            var parseDate = d3.timeParse("%Y-%m-%d %H:%M");
+            var oneReliableData = allData[0].filter(d => parseDate(d.time).getTime() == startDate.getTime())
+                                            .map(d => {return {"location": d.location, "one_reliability": d.one_reliability}});
+            oneReliableData = fillMissingReliableItems(oneReliableData);
+            var mergedData = mergeReliableData(oneReliableData, allData[2]);
+            console.log(mergedData);
+        }
+
+        function fillMissingReliableItems(oneReliableData) {
+            var tempData = [...oneReliableData];
+            for (var i = 1; i <= 19; i++) {
+                var exist = oneReliableData.findIndex(item => item.location == i) >= 0;
+                if (!exist) {
+                    tempData.push({"location": i, "one_reliability": 0});
+                }
+            }
+            return tempData;
+        }
+
+        function mergeReliableData(data1, data2) {
+            var mergedData = [];
+
+            for(var i = 1; i <= 19; i++) {
+                var d1Idx = data1.findIndex(item => item.location == i);
+                var d2Idx = data2.findIndex(item => item.location == i);
+
+                mergedData.push({"location": i, "whole_reliability": (data2[d2Idx].whole_reliability * 100).toFixed(1), "one_reliability": (data1[d1Idx].one_reliability * 100).toFixed(1) });
+            }
+            return mergedData;
+        }
 
         //----------------------- Functions -----------------------
 
