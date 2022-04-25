@@ -245,6 +245,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
 
         //----------------------- Bar Chart -----------------------
 
+        drawBarChartLegend();
         drawBarChart();
 
         function clearBarChart() {
@@ -262,7 +263,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
 
             var locations = mergedData.map(d => d.location);
             
-            var marginBarChart = {top: 10, right: 20, bottom: 20, left: 30};
+            var marginBarChart = {top: 10, right: 110, bottom: 20, left: 30};
             var barChartSvg = d3.select("#barchart")
                                 .append("svg")
                                 .attr("width", "100%")
@@ -337,6 +338,27 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
                 mergedData.push({"location": i, "whole_reliability": (data2[d2Idx].whole_reliability * 100).toFixed(1), "one_reliability": (data1[d1Idx].one_reliability * 100).toFixed(1) });
             }
             return mergedData;
+        }
+
+        function drawBarChartLegend() {
+            var colorOrdinal = d3.scaleOrdinal(d3.schemeCategory10)
+                                 .domain(["Total Data", "One-Day Data"]);
+
+            var colorSvg = d3.select("#barchart-legend")
+                                .append("svg")
+                                .attr("width", "100%")
+                                .attr("height", "100%");
+
+            colorSvg.append("g")
+                    .attr("class", "legendOrdinal")
+                    .attr("transform", "translate(0,0)");
+    
+            var legendOrdinal = d3.legendColor()
+                                    .shapePadding(2)
+                                    .scale(colorOrdinal);
+            
+            colorSvg.select(".legendOrdinal")
+                    .call(legendOrdinal);
         }
 
         //----------------------- Functions -----------------------

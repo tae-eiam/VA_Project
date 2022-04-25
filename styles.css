@@ -230,3 +230,14 @@ body {
     margin: 0 15px;
 }
 
+#barchart {
+    position: relative;
+}
+
+#barchart-legend {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 7em;
+    height: 3em;
+}
