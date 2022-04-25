@@ -214,6 +214,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
 
             runPlayer();
             drawHeatmap();
+            drawBarChart()
         });
 
         //----------------------- Utilities -----------------------
@@ -246,14 +247,73 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
 
         drawBarChart();
 
+        function clearBarChart() {
+            d3.select("#barchart > svg").remove();
+        }
 
         function drawBarChart() {
+            clearBarChart();
+
             var parseDate = d3.timeParse("%Y-%m-%d %H:%M");
             var oneReliableData = allData[0].filter(d => parseDate(d.time).getTime() == startDate.getTime())
                                             .map(d => {return {"location": d.location, "one_reliability": d.one_reliability}});
             oneReliableData = fillMissingReliableItems(oneReliableData);
             var mergedData = mergeReliableData(oneReliableData, allData[2]);
-            console.log(mergedData);
+
+            var locations = mergedData.map(d => d.location);
+            
+            var marginBarChart = {top: 10, right: 20, bottom: 20, left: 30};
+            var barChartSvg = d3.select("#barchart")
+                                .append("svg")
+                                .attr("width", "100%")
+                                .attr("height", "24vh");
+            
+            var barChartWidth = barChartSvg.node().getBoundingClientRect().width - marginBarChart.left - marginBarChart.right,
+                barChartHeight = barChartSvg.node().getBoundingClientRect().height - marginBarChart.top - marginBarChart.bottom;
+
+            var barChartG = barChartSvg.append("g")
+                                       .attr("transform", "translate(" + marginBarChart.left + "," + marginBarChart.top + ")");
+
+            var groupX = d3.scaleBand()
+                           .domain(locations)
+                           .range([0, barChartWidth])
+                           .padding(0.2);
+
+            var elementX = d3.scaleBand()
+                             .domain(["whole", "one"])
+                             .range([0, groupX.bandwidth()]);
+
+            var barY = d3.scaleLinear()
+                         .domain([0, 100])
+                         .range([barChartHeight, 0]);
+
+            var barColors = d3.scaleOrdinal(d3.schemeCategory10)
+                              .domain(["whole", "one"]);
+
+            barChartG.append("g")
+                     .attr("class", "axis")
+                     .attr("transform", "translate(" + 0 + "," + barChartHeight + ")")
+                     .call(d3.axisBottom(groupX).tickSizeOuter(0))
+
+            barChartG.append("g")
+                     .attr("class", "axis")
+                     .call(d3.axisLeft(barY));
+
+            var group = barChartG.selectAll(".group")
+                                 .data(mergedData)
+                                 .enter()
+                                 .append("g")
+                                 .attr("transform",function(d) { return "translate(" + groupX(d.location) + ",0)"; });
+
+            group.selectAll("rect")
+                 .data(function(d) {return [{"group": "whole", "value": d.whole_reliability}, {"group": "one", "value": d.one_reliability}]})
+                 .enter()
+                 .append("rect")
+                 .attr("x", function(d) {return elementX(d.group); })
+                 .attr("y", function(d) { return barY(d.value); })
+                 .attr("width", elementX.bandwidth())
+                 .attr("height", function(d) { return barChartHeight - barY(d.value); })
+                 .style("fill", function(d) {return barColors(d.group)});
         }
 
         function fillMissingReliableItems(oneReliableData) {
@@ -297,7 +357,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
         function mouseOverMap(event, data) {
             d3.select("#tooltip-map")
               .style("display", "block")
-              .html(data.properties.Nbrhood);
+              .html(data.properties.Id + ": " + data.properties.Nbrhood);
         }
 
         function mouseLeaveMap() {
