@@ -304,7 +304,10 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
                                  .data(mergedData)
                                  .enter()
                                  .append("g")
-                                 .attr("transform",function(d) { return "translate(" + groupX(d.location) + ",0)"; });
+                                 .attr("transform",function(d) { return "translate(" + groupX(d.location) + ",0)"; })
+                                 .on("click", clickBarChart)
+                                 .on("mouseover", mouseOverBarChart)
+                                 .on("mouseleave", mouseLeaveBarChart);
 
             group.selectAll("rect")
                  .data(function(d) {return [{"group": "whole", "value": d.whole_reliability}, {"group": "one", "value": d.one_reliability}]})
@@ -359,6 +362,61 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
             
             colorSvg.select(".legendOrdinal")
                     .call(legendOrdinal);
+        }
+
+        function clickBarChart(event, data) {
+            d3.selectAll(".map-area")
+              .style("stroke", "lightgrey")
+              .style("stroke-width", "1px");
+
+            d3.select("#map > svg path[id='" + data.location + "']")
+              .style("stroke", "black")
+              .style("stroke-width", "2px");
+
+            selectedLocation = data.location;
+            drawHeatmap();
+        }
+
+        function mouseOverBarChart(event, data) {
+            var parentTop = d3.select("#barchart").node().offsetTop,
+                parentLeft = d3.select("#barchart").node().offsetLeft;
+
+            var top = d3.select(this).node().getBoundingClientRect().top,
+                left = d3.select(this).node().getBoundingClientRect().left,
+                width = d3.select(this).node().getBoundingClientRect().width;
+
+            var location = data.location + ": " + json.features.filter(d => d.properties.Id == data.location).map(d => d.properties.Nbrhood)[0];
+
+            var tooltip = d3.select("#tooltip-barchart")
+                            .style("display", "block");
+
+            d3.selectAll("#tooltip-barchart > span")
+              .datum([location, data.whole_reliability, data.one_reliability])
+              .html((d, i) => i != 0 ? d[i] + "%" : d[i])
+              .style("color", function(d, i) {
+                  switch(i) {
+                      case 1: return d3.schemeCategory10[0];
+                      case 2: return d3.schemeCategory10[1];
+                      default: return "black";
+                  }
+              });
+
+              var ttWidth = tooltip.node().offsetWidth,
+                  ttHeight = tooltip.node().offsetHeight;
+
+            tooltip.style("top", (top - parentTop - ttHeight - 10) + "px")
+                   .style("left", (left - parentLeft - (ttWidth / 2) + (width / 2)) + "px");
+
+            d3.select(this)
+              .style("opacity", "0.5");
+        }
+
+        function mouseLeaveBarChart() {
+            d3.select("#tooltip-barchart")
+              .style("display", "none");
+
+            d3.select(this)
+              .style("opacity", "1");
         }
 
         //----------------------- Functions -----------------------
