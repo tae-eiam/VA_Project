@@ -248,177 +248,6 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
         drawBarChartLegend();
         drawBarChart();
 
-        function clearBarChart() {
-            d3.select("#barchart > svg").remove();
-        }
-
-        function drawBarChart() {
-            clearBarChart();
-
-            var parseDate = d3.timeParse("%Y-%m-%d %H:%M");
-            var oneReliableData = allData[0].filter(d => parseDate(d.time).getTime() == startDate.getTime())
-                                            .map(d => {return {"location": d.location, "one_reliability": d.one_reliability}});
-            oneReliableData = fillMissingReliableItems(oneReliableData);
-            var mergedData = mergeReliableData(oneReliableData, allData[2]);
-
-            var locations = mergedData.map(d => d.location);
-            
-            var marginBarChart = {top: 10, right: 110, bottom: 20, left: 30};
-            var barChartSvg = d3.select("#barchart")
-                                .append("svg")
-                                .attr("width", "100%")
-                                .attr("height", "24vh");
-            
-            var barChartWidth = barChartSvg.node().getBoundingClientRect().width - marginBarChart.left - marginBarChart.right,
-                barChartHeight = barChartSvg.node().getBoundingClientRect().height - marginBarChart.top - marginBarChart.bottom;
-
-            var barChartG = barChartSvg.append("g")
-                                       .attr("transform", "translate(" + marginBarChart.left + "," + marginBarChart.top + ")");
-
-            var groupX = d3.scaleBand()
-                           .domain(locations)
-                           .range([0, barChartWidth])
-                           .padding(0.2);
-
-            var elementX = d3.scaleBand()
-                             .domain(["whole", "one"])
-                             .range([0, groupX.bandwidth()]);
-
-            var barY = d3.scaleLinear()
-                         .domain([0, 100])
-                         .range([barChartHeight, 0]);
-
-            var barColors = d3.scaleOrdinal(d3.schemeCategory10)
-                              .domain(["whole", "one"]);
-
-            barChartG.append("g")
-                     .attr("class", "axis")
-                     .attr("transform", "translate(" + 0 + "," + barChartHeight + ")")
-                     .call(d3.axisBottom(groupX).tickSizeOuter(0))
-
-            barChartG.append("g")
-                     .attr("class", "axis")
-                     .call(d3.axisLeft(barY));
-
-            var group = barChartG.selectAll(".group")
-                                 .data(mergedData)
-                                 .enter()
-                                 .append("g")
-                                 .attr("transform",function(d) { return "translate(" + groupX(d.location) + ",0)"; })
-                                 .on("click", clickBarChart)
-                                 .on("mouseover", mouseOverBarChart)
-                                 .on("mouseleave", mouseLeaveBarChart);
-
-            group.selectAll("rect")
-                 .data(function(d) {return [{"group": "whole", "value": d.whole_reliability}, {"group": "one", "value": d.one_reliability}]})
-                 .enter()
-                 .append("rect")
-                 .attr("x", function(d) {return elementX(d.group); })
-                 .attr("y", function(d) { return barY(d.value); })
-                 .attr("width", elementX.bandwidth())
-                 .attr("height", function(d) { return barChartHeight - barY(d.value); })
-                 .style("fill", function(d) {return barColors(d.group)});
-        }
-
-        function fillMissingReliableItems(oneReliableData) {
-            var tempData = [...oneReliableData];
-            for (var i = 1; i <= 19; i++) {
-                var exist = oneReliableData.findIndex(item => item.location == i) >= 0;
-                if (!exist) {
-                    tempData.push({"location": i, "one_reliability": 0});
-                }
-            }
-            return tempData;
-        }
-
-        function mergeReliableData(data1, data2) {
-            var mergedData = [];
-
-            for(var i = 1; i <= 19; i++) {
-                var d1Idx = data1.findIndex(item => item.location == i);
-                var d2Idx = data2.findIndex(item => item.location == i);
-
-                mergedData.push({"location": i, "whole_reliability": (data2[d2Idx].whole_reliability * 100).toFixed(1), "one_reliability": (data1[d1Idx].one_reliability * 100).toFixed(1) });
-            }
-            return mergedData;
-        }
-
-        function drawBarChartLegend() {
-            var colorOrdinal = d3.scaleOrdinal(d3.schemeCategory10)
-                                 .domain(["Total Data", "One-Day Data"]);
-
-            var colorSvg = d3.select("#barchart-legend")
-                                .append("svg")
-                                .attr("width", "100%")
-                                .attr("height", "100%");
-
-            colorSvg.append("g")
-                    .attr("class", "legendOrdinal")
-                    .attr("transform", "translate(0,0)");
-    
-            var legendOrdinal = d3.legendColor()
-                                    .shapePadding(2)
-                                    .scale(colorOrdinal);
-            
-            colorSvg.select(".legendOrdinal")
-                    .call(legendOrdinal);
-        }
-
-        function clickBarChart(event, data) {
-            d3.selectAll(".map-area")
-              .style("stroke", "lightgrey")
-              .style("stroke-width", "1px");
-
-            d3.select("#map > svg path[id='" + data.location + "']")
-              .style("stroke", "black")
-              .style("stroke-width", "2px");
-
-            selectedLocation = data.location;
-            drawHeatmap();
-        }
-
-        function mouseOverBarChart(event, data) {
-            var parentTop = d3.select("#barchart").node().offsetTop,
-                parentLeft = d3.select("#barchart").node().offsetLeft;
-
-            var top = d3.select(this).node().getBoundingClientRect().top,
-                left = d3.select(this).node().getBoundingClientRect().left,
-                width = d3.select(this).node().getBoundingClientRect().width;
-
-            var location = data.location + ": " + json.features.filter(d => d.properties.Id == data.location).map(d => d.properties.Nbrhood)[0];
-
-            var tooltip = d3.select("#tooltip-barchart")
-                            .style("display", "block");
-
-            d3.selectAll("#tooltip-barchart > span")
-              .datum([location, data.whole_reliability, data.one_reliability])
-              .html((d, i) => i != 0 ? d[i] + "%" : d[i])
-              .style("color", function(d, i) {
-                  switch(i) {
-                      case 1: return d3.schemeCategory10[0];
-                      case 2: return d3.schemeCategory10[1];
-                      default: return "black";
-                  }
-              });
-
-              var ttWidth = tooltip.node().offsetWidth,
-                  ttHeight = tooltip.node().offsetHeight;
-
-            tooltip.style("top", (top - parentTop - ttHeight - 10) + "px")
-                   .style("left", (left - parentLeft - (ttWidth / 2) + (width / 2)) + "px");
-
-            d3.select(this)
-              .style("opacity", "0.5");
-        }
-
-        function mouseLeaveBarChart() {
-            d3.select("#tooltip-barchart")
-              .style("display", "none");
-
-            d3.select(this)
-              .style("opacity", "1");
-        }
-
         //----------------------- Functions -----------------------
 
         function clickMap(event, data) {
@@ -912,6 +741,177 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
             }
 
             drawLineChart();
+        }
+
+        function clearBarChart() {
+            d3.select("#barchart > svg").remove();
+        }
+
+        function drawBarChart() {
+            clearBarChart();
+
+            var parseDate = d3.timeParse("%Y-%m-%d %H:%M");
+            var oneReliableData = allData[0].filter(d => parseDate(d.time).getTime() == startDate.getTime())
+                                            .map(d => {return {"location": d.location, "one_reliability": d.one_reliability}});
+            oneReliableData = fillMissingReliableItems(oneReliableData);
+            var mergedData = mergeReliableData(oneReliableData, allData[2]);
+
+            var locations = mergedData.map(d => d.location);
+            
+            var marginBarChart = {top: 10, right: 110, bottom: 20, left: 30};
+            var barChartSvg = d3.select("#barchart")
+                                .append("svg")
+                                .attr("width", "100%")
+                                .attr("height", "24vh");
+            
+            var barChartWidth = barChartSvg.node().getBoundingClientRect().width - marginBarChart.left - marginBarChart.right,
+                barChartHeight = barChartSvg.node().getBoundingClientRect().height - marginBarChart.top - marginBarChart.bottom;
+
+            var barChartG = barChartSvg.append("g")
+                                       .attr("transform", "translate(" + marginBarChart.left + "," + marginBarChart.top + ")");
+
+            var groupX = d3.scaleBand()
+                           .domain(locations)
+                           .range([0, barChartWidth])
+                           .padding(0.2);
+
+            var elementX = d3.scaleBand()
+                             .domain(["whole", "one"])
+                             .range([0, groupX.bandwidth()]);
+
+            var barY = d3.scaleLinear()
+                         .domain([0, 100])
+                         .range([barChartHeight, 0]);
+
+            var barColors = d3.scaleOrdinal(d3.schemeCategory10)
+                              .domain(["whole", "one"]);
+
+            barChartG.append("g")
+                     .attr("class", "axis")
+                     .attr("transform", "translate(" + 0 + "," + barChartHeight + ")")
+                     .call(d3.axisBottom(groupX).tickSizeOuter(0))
+
+            barChartG.append("g")
+                     .attr("class", "axis")
+                     .call(d3.axisLeft(barY));
+
+            var group = barChartG.selectAll(".group")
+                                 .data(mergedData)
+                                 .enter()
+                                 .append("g")
+                                 .attr("transform",function(d) { return "translate(" + groupX(d.location) + ",0)"; })
+                                 .on("click", clickBarChart)
+                                 .on("mouseover", mouseOverBarChart)
+                                 .on("mouseleave", mouseLeaveBarChart);
+
+            group.selectAll("rect")
+                 .data(function(d) {return [{"group": "whole", "value": d.whole_reliability}, {"group": "one", "value": d.one_reliability}]})
+                 .enter()
+                 .append("rect")
+                 .attr("x", function(d) {return elementX(d.group); })
+                 .attr("y", function(d) { return barY(d.value); })
+                 .attr("width", elementX.bandwidth())
+                 .attr("height", function(d) { return barChartHeight - barY(d.value); })
+                 .style("fill", function(d) {return barColors(d.group)});
+        }
+
+        function fillMissingReliableItems(oneReliableData) {
+            var tempData = [...oneReliableData];
+            for (var i = 1; i <= 19; i++) {
+                var exist = oneReliableData.findIndex(item => item.location == i) >= 0;
+                if (!exist) {
+                    tempData.push({"location": i, "one_reliability": 0});
+                }
+            }
+            return tempData;
+        }
+
+        function mergeReliableData(data1, data2) {
+            var mergedData = [];
+
+            for(var i = 1; i <= 19; i++) {
+                var d1Idx = data1.findIndex(item => item.location == i);
+                var d2Idx = data2.findIndex(item => item.location == i);
+
+                mergedData.push({"location": i, "whole_reliability": (data2[d2Idx].whole_reliability * 100).toFixed(1), "one_reliability": (data1[d1Idx].one_reliability * 100).toFixed(1) });
+            }
+            return mergedData;
+        }
+
+        function drawBarChartLegend() {
+            var colorOrdinal = d3.scaleOrdinal(d3.schemeCategory10)
+                                 .domain(["Total Data", "One-Day Data"]);
+
+            var colorSvg = d3.select("#barchart-legend")
+                                .append("svg")
+                                .attr("width", "100%")
+                                .attr("height", "100%");
+
+            colorSvg.append("g")
+                    .attr("class", "legendOrdinal")
+                    .attr("transform", "translate(0,0)");
+    
+            var legendOrdinal = d3.legendColor()
+                                    .shapePadding(2)
+                                    .scale(colorOrdinal);
+            
+            colorSvg.select(".legendOrdinal")
+                    .call(legendOrdinal);
+        }
+
+        function clickBarChart(event, data) {
+            d3.selectAll(".map-area")
+              .style("stroke", "lightgrey")
+              .style("stroke-width", "1px");
+
+            d3.select("#map > svg path[id='" + data.location + "']")
+              .style("stroke", "black")
+              .style("stroke-width", "2px");
+
+            selectedLocation = data.location;
+            drawHeatmap();
+        }
+
+        function mouseOverBarChart(event, data) {
+            var parentTop = d3.select("#barchart").node().offsetTop,
+                parentLeft = d3.select("#barchart").node().offsetLeft;
+
+            var top = d3.select(this).node().getBoundingClientRect().top,
+                left = d3.select(this).node().getBoundingClientRect().left,
+                width = d3.select(this).node().getBoundingClientRect().width;
+
+            var location = data.location + ": " + json.features.filter(d => d.properties.Id == data.location).map(d => d.properties.Nbrhood)[0];
+
+            var tooltip = d3.select("#tooltip-barchart")
+                            .style("display", "block");
+
+            d3.selectAll("#tooltip-barchart > span")
+              .datum([location, data.whole_reliability, data.one_reliability])
+              .html((d, i) => i != 0 ? d[i] + "%" : d[i])
+              .style("color", function(d, i) {
+                  switch(i) {
+                      case 1: return d3.schemeCategory10[0];
+                      case 2: return d3.schemeCategory10[1];
+                      default: return "black";
+                  }
+              });
+
+              var ttWidth = tooltip.node().offsetWidth,
+                  ttHeight = tooltip.node().offsetHeight;
+
+            tooltip.style("top", (top - parentTop - ttHeight - 10) + "px")
+                   .style("left", (left - parentLeft - (ttWidth / 2) + (width / 2)) + "px");
+
+            d3.select(this)
+              .style("opacity", "0.5");
+        }
+
+        function mouseLeaveBarChart() {
+            d3.select("#tooltip-barchart")
+              .style("display", "none");
+
+            d3.select(this)
+              .style("opacity", "1");
         }
         
         function filterData(date, utilities) {
