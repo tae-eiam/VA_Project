@@ -13,6 +13,7 @@ var timeStampDateFormat = d3.timeFormat("%a %d %H:%M");
 var playStatus = false;
 
 var selectedLocation = 1;
+var isSelectingHeatmap = false;
 var selectedHeatmapTime = new Date("2020-04-06 00:00");
 
 //----------------------- Dataset -----------------------
@@ -242,6 +243,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
 
         drawLineChartLegend();
         drawLineChart();
+        clearOnlyLine();
 
         //----------------------- Bar Chart -----------------------
 
@@ -430,7 +432,9 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
         }
 
         function clearHeatmap() {
+            isSelectingHeatmap = false;
             d3.select("#heatmap > svg").remove();
+            clearOnlyLine();
         }
 
         function drawHeatmap(date = null) {
@@ -527,6 +531,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
             event.stopPropagation();
             selectedHeatmapTime = data.date;
             drawHeatmap(selectedHeatmapTime);
+            isSelectingHeatmap = true;
             drawLineChart();
         }
 
@@ -553,6 +558,10 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
 
             tooltip.style("top", (event.clientY - 30) + "px")
                    .style("left", (event.clientX - (ttWidth / 2)) + "px")
+        }
+
+        function clearOnlyLine() {
+            d3.selectAll("#linechart .removable").remove();
         }
 
         function clearLineChart() {
@@ -608,6 +617,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
 
             groupData.forEach(function(d, index) {
                 linechartG.append("path")
+                          .attr("class", "removable")
                           .style("stroke", function() {return d.color = color(d.key)})
                           .style("stroke-width", "3px")
                           .style("fill", "none")
@@ -617,6 +627,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
 
             linechartG.append("path")
                       .attr("id", "value-line")
+                      .attr("class", "removable")
                       .style("stroke", "black")
                       .style("stroke-width", "2px")
                       .style("opacity", "0");
@@ -624,6 +635,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
             var bisect = d3.bisector(function(d) { return d.time; }).left;
 
             linechartG.append("rect")
+                      .attr("class", "removable")
                       .style("fill", "none")
                       .style("pointer-events", "all")
                       .attr('width', linechartWidth)
@@ -740,7 +752,9 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
                   .style("opacity", "1");
             }
 
-            drawLineChart();
+            if (isSelectingHeatmap) {
+                drawLineChart();
+            }
         }
 
         function clearBarChart() {
