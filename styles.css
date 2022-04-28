@@ -3,7 +3,6 @@ html, body {
 }
 
 body {
-    /*border: 2px solid red;*/
     padding: 0 10px;
 }
 
@@ -11,29 +10,21 @@ body {
     display: flex;
     flex-flow: column nowrap;
     padding: 0 1em 1em 1em;
-    /*border: 2px solid blue;*/
 }
 
 #title {
     font-weight: 100;
-    /*border: 2px solid black;*/
 }
 
 #content {
     display: flex;
     flex-flow: row nowrap;
-    /*border: 2px solid black;*/
 }
 
 .sub-section {
     flex: 1 1 0;
     display: flex;
     flex-flow: column nowrap;
-    /*border: 2px solid green;*/
-}
-
-.sub-section > div {
-    /*border: 2px solid orange;*/
 }
 
 #map {
@@ -69,7 +60,6 @@ body {
     top: 0;
     left: 0;
     pointer-events: none;
-    /*border: 2px solid black;*/
 }
 
 #missing-legend{
@@ -252,6 +242,7 @@ body {
     font-size: 0.8em;
     font-weight: bold;
     padding: 2px 0;
+    z-index: 1;
 }
 
 #tooltip-barchart > span {

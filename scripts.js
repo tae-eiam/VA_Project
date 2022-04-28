@@ -770,9 +770,9 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
             oneReliableData = fillMissingReliableItems(oneReliableData);
             var mergedData = mergeReliableData(oneReliableData, allData[2]);
 
-            var locations = mergedData.map(d => d.location);
+            var locations = mergedData.map(d => d.nbrhood);
             
-            var marginBarChart = {top: 10, right: 110, bottom: 20, left: 30};
+            var marginBarChart = {top: 10, right: 110, bottom: 50, left: 30};
             var barChartSvg = d3.select("#barchart")
                                 .append("svg")
                                 .attr("width", "100%")
@@ -804,6 +804,11 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
                      .attr("class", "axis")
                      .attr("transform", "translate(" + 0 + "," + barChartHeight + ")")
                      .call(d3.axisBottom(groupX).tickSizeOuter(0))
+                     .selectAll("text")  
+                     .style("text-anchor", "end")
+                     .attr("dx", "-0.5em")
+                     .attr("dy", "0.6em")
+                     .attr("transform", "rotate(-30)");
 
             barChartG.append("g")
                      .attr("class", "axis")
@@ -813,7 +818,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
                                  .data(mergedData)
                                  .enter()
                                  .append("g")
-                                 .attr("transform",function(d) { return "translate(" + groupX(d.location) + ",0)"; })
+                                 .attr("transform",function(d) { return "translate(" + groupX(d.nbrhood) + ",0)"; })
                                  .on("click", clickBarChart)
                                  .on("mouseover", mouseOverBarChart)
                                  .on("mouseleave", mouseLeaveBarChart);
@@ -846,8 +851,9 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
             for(var i = 1; i <= 19; i++) {
                 var d1Idx = data1.findIndex(item => item.location == i);
                 var d2Idx = data2.findIndex(item => item.location == i);
+                var nbrhood = json.features.filter(d => d.properties.Id == i).map(d => d.properties.Nbrhood)[0];
 
-                mergedData.push({"location": i, "whole_reliability": (data2[d2Idx].whole_reliability * 100).toFixed(1), "one_reliability": (data1[d1Idx].one_reliability * 100).toFixed(1) });
+                mergedData.push({"location": i, "nbrhood": nbrhood, "whole_reliability": (data2[d2Idx].whole_reliability * 100).toFixed(1), "one_reliability": (data1[d1Idx].one_reliability * 100).toFixed(1) });
             }
             return mergedData;
         }
@@ -894,7 +900,7 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
                 left = d3.select(this).node().getBoundingClientRect().left,
                 width = d3.select(this).node().getBoundingClientRect().width;
 
-            var location = data.location + ": " + json.features.filter(d => d.properties.Id == data.location).map(d => d.properties.Nbrhood)[0];
+            var location = data.location + ": " + data.nbrhood;
 
             var tooltip = d3.select("#tooltip-barchart")
                             .style("display", "block");
