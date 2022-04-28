@@ -736,7 +736,9 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
 
             d3.selectAll(".cell")
               .property("selected", true)
-              .on("click", clickLineChartLegend);
+              .on("click", clickLineChartLegend)
+              .on("mouseover", mouseOverLineChartLegend)
+              .on("mouseleave", mouseLeaveLineChartLegend);
         }
 
         function clickLineChartLegend() {
@@ -754,6 +756,20 @@ Promise.all([d3.csv("mc1-data.csv"), d3.csv('mc1-hour-data.csv'), d3.csv('whole-
 
             if (isSelectingHeatmap) {
                 drawLineChart();
+            }
+        }
+
+        function mouseOverLineChartLegend() {
+            d3.select(this)
+              .style("opacity", "0.5");
+        }
+
+        function mouseLeaveLineChartLegend() {
+            var isSelected = d3.select(this).property("selected");
+
+            if (isSelected) {
+                d3.select(this)
+                  .style("opacity", "1");
             }
         }
 
